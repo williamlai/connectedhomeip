@@ -251,10 +251,14 @@ void ENFORCE_FORMAT(3, 0) InteractiveServerLoggingCallback(const char * module, 
     vsnprintf(message, sizeof(message), msg, args_copy);
     va_end(args_copy);
 
+#ifdef CONFIG_MTMGR_DISABLE_BASE64_ENCODE_IN_LOGS
+    gInteractiveServerResult.MaybeAddLog(module, category, message);
+#else
     char base64Message[CHIP_CONFIG_LOG_MESSAGE_MAX_SIZE * 2] = {};
     chip::Base64Encode(chip::Uint8::from_char(message), static_cast<uint16_t>(strlen(message)), base64Message);
 
     gInteractiveServerResult.MaybeAddLog(module, category, base64Message);
+#endif
 }
 
 } // namespace

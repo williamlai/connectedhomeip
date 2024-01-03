@@ -44,6 +44,10 @@ config("config") {
     defines += [ "CONFIG_USE_LOCAL_STORAGE" ]
   }
 
+  defines += [
+    "CONFIG_MTMGR_DISABLE_BASE64_ENCODE_IN_LOGS",
+  ]
+
   cflags = [ "-Wconversion" ]
 }
 
