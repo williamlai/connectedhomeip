@@ -135,6 +135,41 @@ executable("chip-tool") {
   output_dir = root_out_dir
 }
 
+static_library("mtmgr") {
+  sources = [
+    "mtmgr/MatterManager.cpp"
+  ]
+
+  public_configs = [ ":config" ]
+
+  include_dirs = [
+    "mtmgr",
+  ]
+
+  deps = [
+    ":chip-tool-utils",
+  ]
+
+  output_dir = root_out_dir
+}
+
+executable("mtmgr-app") {
+  sources = [ "mtmgr/main.c" ]
+
+  include_dirs = [
+    "mtmgr",
+  ]
+
+  deps = [
+    ":mtmgr",
+  ]
+
+  output_dir = root_out_dir
+}
+
 group("default") {
-  deps = [ ":chip-tool" ]
+  deps = [
+    ":chip-tool",
+    ":mtmgr-app",
+  ]
 }
