@@ -1,3 +1,8 @@
+/**
+ * Linux related implementation is in
+ *      examples/chip-tool/third_party/connectedhomeip/src/include/platform/internal/GenericPlatformManagerImpl_POSIX.ipp"
+ */
+
 #include <lib/core/CASEAuthTag.h>
 
 #include <commands/common/CredentialIssuerCommands.h>
@@ -13,6 +18,7 @@
 #include <crypto/RawKeySessionKeystore.h>
 #include <lib/core/CHIPError.h>
 #include <lib/support/TestGroupData.h>
+#include <thread>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,6 +40,10 @@ static bool mAdvertiseOperational = false;
 static PersistentStorage mStorage;
 
 /* Data members and defines from CHIPCommand.h */
+static constexpr char kIdentityAlpha[] = "alpha";
+static constexpr char kIdentityBeta[]  = "beta";
+static constexpr char kIdentityGamma[] = "gamma";
+
 struct CommissionerIdentity
 {
     bool operator<(const CommissionerIdentity & other) const
@@ -79,9 +89,24 @@ static chip::Credentials::GroupDataProviderImpl sGroupDataProvider{ kMaxGroupsPe
 static chip::app::DefaultICDClientStorage sICDClientStorage;
 static chip::Crypto::RawKeySessionKeystore sSessionKeystore;
 
+/* Additional global variable for handling the event loop */
+// static bool mIsRunningEventLoop = false;
+static std::thread eventLoopThread;
+
+/* variables for handling the timed wait */
+static std::mutex cvWaitingForResponseMutex;
+static bool mWaitingForResponse = true;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Function prototypes */
+static CHIP_ERROR GetIdentityNodeId(std::string identity, chip::NodeId * nodeId);
+static CHIP_ERROR EnsureCommissionerForIdentity(std::string identity);
+
+static CHIP_ERROR StartWaiting(chip::System::Clock::Timeout duration);
+static void StopWaiting();
 
 static CHIP_ERROR InitializeCommissioner(CommissionerIdentity & identity, chip::FabricId fabricId)
 {
@@ -150,7 +175,7 @@ static CHIP_ERROR InitializeCommissioner(CommissionerIdentity & identity, chip::
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR setUpStack()
+static CHIP_ERROR setUpStack()
 {
     ReturnLogErrorOnFailure(chip::Platform::MemoryInit());
 
@@ -191,6 +216,165 @@ CHIP_ERROR setUpStack()
     return CHIP_NO_ERROR;
 }
 
+static std::string GetIdentity()
+{
+    std::string name = kIdentityAlpha;
+    if (name.compare(kIdentityAlpha) != 0 && name.compare(kIdentityBeta) != 0 && name.compare(kIdentityGamma) != 0 &&
+        name.compare(kIdentityNull) != 0)
+    {
+        chip::FabricId fabricId = strtoull(name.c_str(), nullptr, 0);
+        if (fabricId >= kIdentityOtherFabricId)
+        {
+            // normalize name since it is used in persistent storage
+
+            char s[24];
+            sprintf(s, "%" PRIu64, fabricId);
+
+            name = s;
+        }
+        else
+        {
+            ChipLogError(chipTool, "Unknown commissioner name: %s. Supported names are [%s, %s, %s, 4, 5...]", name.c_str(),
+                         kIdentityAlpha, kIdentityBeta, kIdentityGamma);
+            chipDie();
+        }
+    }
+
+    return name;
+}
+
+static chip::Controller::DeviceCommissioner & GetCommissioner(std::string identity)
+{
+    // We don't have a great way to handle commissioner setup failures here.
+    // This only matters for commands (like TestCommand) that involve multiple
+    // identities.
+    VerifyOrDie(EnsureCommissionerForIdentity(identity) == CHIP_NO_ERROR);
+
+    chip::NodeId nodeId;
+    VerifyOrDie(GetIdentityNodeId(identity, &nodeId) == CHIP_NO_ERROR);
+    CommissionerIdentity lookupKey{ identity, nodeId };
+    auto item = mCommissioners.find(lookupKey);
+    VerifyOrDie(item != mCommissioners.end());
+    return *item->second;
+}
+
+static chip::Controller::DeviceCommissioner & CurrentCommissioner()
+{
+    return GetCommissioner(GetIdentity());
+}
+
+static CHIP_ERROR GetIdentityNodeId(std::string identity, chip::NodeId * nodeId)
+{
+    if (identity == kIdentityNull)
+    {
+        *nodeId = chip::kUndefinedNodeId;
+        return CHIP_NO_ERROR;
+    }
+
+    ReturnLogErrorOnFailure(mCommissionerStorage.Init(identity.c_str(), nullptr));
+
+    *nodeId = mCommissionerStorage.GetLocalNodeId();
+
+    return CHIP_NO_ERROR;
+}
+
+static CHIP_ERROR EnsureCommissionerForIdentity(std::string identity)
+{
+    chip::NodeId nodeId;
+    ReturnErrorOnFailure(GetIdentityNodeId(identity, &nodeId));
+    CommissionerIdentity lookupKey{ identity, nodeId };
+    if (mCommissioners.find(lookupKey) != mCommissioners.end())
+    {
+        return CHIP_NO_ERROR;
+    }
+
+    // Need to initialize the commissioner.
+    chip::FabricId fabricId;
+    if (identity == kIdentityAlpha)
+    {
+        fabricId = kIdentityAlphaFabricId;
+    }
+    else if (identity == kIdentityBeta)
+    {
+        fabricId = kIdentityBetaFabricId;
+    }
+    else if (identity == kIdentityGamma)
+    {
+        fabricId = kIdentityGammaFabricId;
+    }
+    else
+    {
+        fabricId = strtoull(identity.c_str(), nullptr, 0);
+        if (fabricId < kIdentityOtherFabricId)
+        {
+            ChipLogError(chipTool, "Invalid identity: %s", identity.c_str());
+            return CHIP_ERROR_INVALID_ARGUMENT;
+        }
+    }
+
+    return InitializeCommissioner(lookupKey, fabricId);
+}
+
+static void OnResponseTimeout(chip::System::Layer *, void * appState)
+{
+    StopWaiting();
+    *(reinterpret_cast<bool *>(appState)) = true;
+}
+
+static CHIP_ERROR StartWaiting(chip::System::Clock::Timeout duration)
+{
+    bool timedOut = false;
+
+    {
+        std::lock_guard<std::mutex> lk(cvWaitingForResponseMutex);
+        mWaitingForResponse = true;
+    }
+
+    ReturnLogErrorOnFailure(chip::DeviceLayer::SystemLayer().StartTimer(duration, OnResponseTimeout, &timedOut));
+
+    while (mWaitingForResponse)
+    {
+        chip::DeviceLayer::PlatformMgr().RunEventLoop();
+    }
+
+    return timedOut ? CHIP_ERROR_TIMEOUT : CHIP_NO_ERROR;
+}
+
+static void StopWaiting()
+{
+    {
+        std::lock_guard<std::mutex> lk(cvWaitingForResponseMutex);
+        mWaitingForResponse = false;
+    }
+    chip::DeviceLayer::PlatformMgr().StopEventLoopTask();
+}
+
+class DeviceDiscoveryDelegateImpl : public chip::Controller::DeviceDiscoveryDelegate
+{
+public:
+    void OnDiscoveredDevice(const chip::Dnssd::DiscoveredNodeData & nodeData) override
+    {
+        nodeData.LogDetail();
+
+        StopWaiting();
+    }
+};
+
+CHIP_ERROR DiscoverCommissionablesCommand()
+{
+    chip::Controller::DeviceCommissioner * mCommissioner = &CurrentCommissioner();
+    DeviceDiscoveryDelegateImpl delegator;
+
+    mCommissioner->RegisterDeviceDiscoveryDelegate(&delegator);
+    chip::Dnssd::DiscoveryFilter filter(chip::Dnssd::DiscoveryFilterType::kNone, (uint64_t) 0);
+
+    mCommissioner->DiscoverCommissionableNodes(filter);
+
+    StartWaiting(chip::System::Clock::Seconds16(30));
+
+    return CHIP_NO_ERROR;
+}
+
 uint32_t Mtmgr_setUpStack()
 {
     return (uint32_t) setUpStack().AsInteger();
@@ -204,6 +388,11 @@ void Mtmgr_tearDownStack()
     }
 
     chip::Controller::DeviceControllerFactory::GetInstance().Shutdown();
+}
+
+uint32_t Mtmgr_discoverCommissionables()
+{
+    return (uint32_t) DiscoverCommissionablesCommand().AsInteger();
 }
 
 #ifdef __cplusplus

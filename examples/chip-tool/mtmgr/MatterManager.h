@@ -10,6 +10,8 @@ extern "C" {
 uint32_t Mtmgr_setUpStack();
 void Mtmgr_tearDownStack();
 
+uint32_t Mtmgr_discoverCommissionables();
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
