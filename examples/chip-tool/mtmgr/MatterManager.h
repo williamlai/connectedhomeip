@@ -12,6 +12,8 @@ void Mtmgr_tearDownStack();
 
 uint32_t Mtmgr_discoverCommissionables();
 
+uint32_t Mtmgr_pairingCommandOnNetworkLong(uint64_t nodeId, uint64_t mDiscoveryFilterCode);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -14,6 +14,9 @@ int main(int argc, char * argv[])
     ret = Mtmgr_discoverCommissionables();
     printf("Mtmgr_discoverCommissionables() ret: %d\n", ret);
 
+    ret = Mtmgr_pairingCommandOnNetwork(41, 12345678ULL);
+    printf("Mtmgr_pairingCommand() ret: %d\n", ret);
+
     Mtmgr_tearDownStack();
 
     return 0;

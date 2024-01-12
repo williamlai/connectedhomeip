@@ -97,6 +97,9 @@ static std::thread eventLoopThread;
 static std::mutex cvWaitingForResponseMutex;
 static bool mWaitingForResponse = true;
 
+/* Data member from PairingCommand.h */
+static bool mDeviceIsICD;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -375,6 +378,27 @@ CHIP_ERROR DiscoverCommissionablesCommand()
     return CHIP_NO_ERROR;
 }
 
+/**
+ * Refere to functions in PairingCommand.cpp
+ *      PairingCommand::RunCommand()
+ *      CHIP_ERROR PairingCommand::RunInternal(NodeId remoteId)
+ *      CHIP_ERROR PairingCommand::PairWithMdns(NodeId remoteId)
+ */
+CHIP_ERROR PairingCommandOnNetworkLong(chip::NodeId nodeId, uint64_t mDiscoveryFilterCode)
+{
+    mCredIssuerCmds->SetCredentialIssuerCATValues(chip::kUndefinedCATs);
+
+    mDeviceIsICD = false;
+
+    chip::Dnssd::DiscoveryFilter filter(chip::Dnssd::DiscoveryFilterType::kLongDiscriminator);
+    filter.code = mDiscoveryFilterCode;
+
+    DeviceDiscoveryDelegateImpl delegator;
+    CurrentCommissioner().RegisterDeviceDiscoveryDelegate(&delegator);
+
+    return CHIP_NO_ERROR;
+}
+
 uint32_t Mtmgr_setUpStack()
 {
     return (uint32_t) setUpStack().AsInteger();
@@ -393,6 +417,11 @@ void Mtmgr_tearDownStack()
 uint32_t Mtmgr_discoverCommissionables()
 {
     return (uint32_t) DiscoverCommissionablesCommand().AsInteger();
+}
+
+uint32_t Mtmgr_pairingCommandOnNetworkLong(uint64_t nodeId, uint64_t mDiscoveryFilterCode)
+{
+    return (uint32_t) PairingCommandOnNetworkLong(nodeId, mDiscoveryFilterCode).AsInteger();
 }
 
 #ifdef __cplusplus
