@@ -5,6 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug mtmgr-app",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/chip-tool/mtmgr-app",
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug chip-tool pairing onnetwork-long 41 12345678 1001",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/chip-tool/chip-tool",
+            "args": ["pairing", "onnetwork-long", "41", "12345678", "1001"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Attach to running process",
             "type": "lldb",
             "request": "attach",
