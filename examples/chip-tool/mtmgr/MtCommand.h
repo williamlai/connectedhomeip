@@ -5,6 +5,19 @@
 class MtCommand
 {
 public:
+    using ChipDeviceCommissioner = ::chip::Controller::DeviceCommissioner;
+    using ChipDeviceController   = ::chip::Controller::DeviceController;
+    using IPAddress              = ::chip::Inet::IPAddress;
+    using NodeId                 = ::chip::NodeId;
+    using PeerId                 = ::chip::PeerId;
+    using PeerAddress            = ::chip::Transport::PeerAddress;
+
+    struct AddressWithInterface
+    {
+        ::chip::Inet::IPAddress address;
+        ::chip::Inet::InterfaceId interfaceId;
+    };
+
     MtCommand(MatterManagerCore & mtmgrCore) : mMtmgrCore(mtmgrCore) {}
     virtual ~MtCommand() {}
 

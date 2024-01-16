@@ -21,6 +21,14 @@
             "cwd": "${workspaceFolder}"
         },
         {
+            "name": "Debug chip-tool pairing onnetwork-long 41 12345678 1001",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/chip-tool/chip-tool",
+            "args": ["pairing", "onnetwork-long", "41", "12345678", "1001"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Debug chip-tool onoff toggle 41 1",
             "type": "lldb",
             "request": "launch",

@@ -75,6 +75,9 @@ public:
 
     ChipDeviceCommissioner & GetCommissioner(std::string identity);
 
+    CredentialIssuerCommands * GetCredIssuerCmds() { return mCredIssuerCmds; }
+    chip::app::DefaultICDClientStorage & GetICDClientStorage() { return sICDClientStorage; }
+
 protected:
     // mStorageDirectory lives here so we can just set it in RunAsInteractive.
     chip::Optional<char *> mStorageDirectory;
