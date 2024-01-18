@@ -73,7 +73,13 @@ void ActiveResolveAttempts::CompleteCommissionable(const chip::Dnssd::Discovered
     {
         if (item.attempt.Matches(data, chip::Dnssd::DiscoveryType::kCommissionableNode))
         {
-            item.attempt.Clear();
+            if (item.queryDueTime > mClock->GetMonotonicTimestamp() + item.nextRetryDelay)
+            {
+                item.attempt.Clear();
+            }
+
+            item.isAttemptCompleted = true;
+
             return;
         }
     }
@@ -159,7 +165,6 @@ void ActiveResolveAttempts::MarkPending(ScheduledAttempt && attempt)
     //     queryDueTime
 
     RetryEntry * entryToUse = &mRetryQueue[0];
-
     for (size_t i = 1; i < kRetryQueueSize; i++)
     {
         if (entryToUse->attempt.Matches(attempt))
@@ -215,9 +220,10 @@ void ActiveResolveAttempts::MarkPending(ScheduledAttempt && attempt)
     }
 
     attempt.WillCoalesceWith(entryToUse->attempt);
-    entryToUse->attempt        = attempt;
-    entryToUse->queryDueTime   = mClock->GetMonotonicTimestamp();
-    entryToUse->nextRetryDelay = System::Clock::Seconds16(1);
+    entryToUse->attempt            = attempt;
+    entryToUse->isAttemptCompleted = false;
+    entryToUse->queryDueTime       = mClock->GetMonotonicTimestamp();
+    entryToUse->nextRetryDelay     = System::Clock::Seconds16(1);
 }
 
 Optional<System::Clock::Timeout> ActiveResolveAttempts::GetTimeUntilNextExpectedResponse() const
@@ -269,6 +275,12 @@ Optional<ActiveResolveAttempts::ScheduledAttempt> ActiveResolveAttempts::NextSch
         {
             ChipLogError(Discovery, "Timeout waiting for mDNS resolution.");
             entry.attempt.Clear();
+            continue;
+        }
+
+        if (entry.isAttemptCompleted)
+        {
+            entry.attempt.Clear(); // complete before timeout
             continue;
         }
 

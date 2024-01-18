@@ -297,6 +297,7 @@ private:
         ScheduledAttempt attempt;
         // When a reply is expected for this item
         chip::System::Clock::Timestamp queryDueTime;
+        bool isAttemptCompleted;
 
         // Next expected delay for sending if reply is not reached by
         // 'queryDueTimeMs'
