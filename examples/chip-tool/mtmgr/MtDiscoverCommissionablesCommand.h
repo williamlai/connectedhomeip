@@ -28,14 +28,16 @@ public:
     /////////// DeviceDiscoveryDelegate Interface /////////
     void OnDiscoveredDevice(const chip::Dnssd::DiscoveredNodeData & nodeData) override;
 
-    chip::System::Clock::Timeout GetWaitDuration() const { return chip::System::Clock::Seconds16(30); }
+    chip::System::Clock::Timeout GetWaitDuration() const { return mTimeout.ValueOr(chip::System::Clock::Seconds16(30)); }
 
+    void setTimeout(chip::System::Clock::Timeout timeout) { mTimeout.SetValue(timeout); }
     void setDiscoverOnce(bool discoverOnce) { mDiscoverOnce.SetValue(discoverOnce); }
 
 protected:
     chip::Controller::DeviceCommissioner * mCommissioner;
 
 private:
+    chip::Optional<chip::System::Clock::Timeout> mTimeout;
     chip::Optional<bool> mDiscoverOnce;
 };
 

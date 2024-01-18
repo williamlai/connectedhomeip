@@ -31,6 +31,7 @@ void Mtmgr_test()
 
     MtDiscoverCommissionablesCommand discoverCommissionables(mtmgrCore);
     discoverCommissionables.setDiscoverOnce(false);
+    discoverCommissionables.setTimeout(chip::System::Clock::Seconds16(1));
     err = discoverCommissionables.Run();
     std::cout << "discoverCommissionables.Run() ret:" << err.AsString() << std::endl;
 
