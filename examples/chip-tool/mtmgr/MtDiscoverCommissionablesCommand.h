@@ -30,6 +30,8 @@ public:
 
     chip::System::Clock::Timeout GetWaitDuration() const { return chip::System::Clock::Seconds16(30); }
 
+    void setDiscoverOnce(bool discoverOnce) { mDiscoverOnce.SetValue(discoverOnce); }
+
 protected:
     chip::Controller::DeviceCommissioner * mCommissioner;
 
