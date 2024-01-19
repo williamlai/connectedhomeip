@@ -18,6 +18,8 @@
 #include <lib/core/CHIPError.h>
 #include <lib/support/TestGroupData.h>
 
+#include "NodeIdStorage.h"
+
 inline constexpr char kIdentityAlpha[] = "alpha";
 inline constexpr char kIdentityBeta[]  = "beta";
 inline constexpr char kIdentityGamma[] = "gamma";
@@ -78,6 +80,8 @@ public:
     CredentialIssuerCommands * GetCredIssuerCmds() { return mCredIssuerCmds; }
     chip::app::DefaultICDClientStorage & GetICDClientStorage() { return sICDClientStorage; }
 
+    NodeIdStorage & GetNodeIdStorage() { return sNodeIdStorage; }
+
 protected:
     // mStorageDirectory lives here so we can just set it in RunAsInteractive.
     chip::Optional<char *> mStorageDirectory;
@@ -102,6 +106,8 @@ protected:
     CHIP_ERROR GetIdentityNodeId(std::string identity, chip::NodeId * nodeId);
     CHIP_ERROR GetIdentityRootCertificate(std::string identity, chip::ByteSpan & span);
     void SetIdentity(const char * name);
+
+    static NodeIdStorage sNodeIdStorage;
 
 private:
     CHIP_ERROR SetUpStack();

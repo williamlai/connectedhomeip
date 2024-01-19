@@ -142,7 +142,8 @@ static_library("mtmgr") {
     "mtmgr/MatterManagerCore.cpp",
     "mtmgr/MtCommand.cpp",
     "mtmgr/MtDiscoverCommissionablesCommand.cpp",
-    "mtmgr/MtPairingCommand.cpp"
+    "mtmgr/MtPairingCommand.cpp",
+    "mtmgr/NodeIdStorage.cpp"
   ]
 
   public_configs = [ ":config" ]

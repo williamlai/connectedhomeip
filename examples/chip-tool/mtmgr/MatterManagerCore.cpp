@@ -16,6 +16,7 @@ constexpr chip::FabricId kIdentityGammaFabricId = 3;
 constexpr chip::FabricId kIdentityOtherFabricId = 4;
 constexpr char kPAATrustStorePathVariable[]     = "CHIPTOOL_PAA_TRUST_STORE_PATH";
 constexpr char kCDTrustStorePathVariable[]      = "CHIPTOOL_CD_TRUST_STORE_PATH";
+constexpr char kNodeIdStoreName[]               = "nodeid";
 
 const chip::Credentials::AttestationTrustStore * MatterManagerCore::sTrustStore = nullptr;
 chip::Credentials::GroupDataProviderImpl MatterManagerCore::sGroupDataProvider{ kMaxGroupsPerFabric, kMaxGroupKeysPerFabric };
@@ -24,6 +25,7 @@ chip::app::DefaultICDClientStorage MatterManagerCore::sICDClientStorage;
 chip::Crypto::RawKeySessionKeystore MatterManagerCore::sSessionKeystore;
 chip::app::DefaultCheckInDelegate MatterManagerCore::sCheckInDelegate;
 chip::app::CheckInHandler MatterManagerCore::sCheckInHandler;
+NodeIdStorage sNodeIdStorage;
 
 CHIP_ERROR GetAttestationTrustStore(const char * paaTrustStorePath, const chip::Credentials::AttestationTrustStore ** trustStore)
 {
@@ -72,6 +74,8 @@ CHIP_ERROR MatterManagerCore::SetUpStack()
     ReturnLogErrorOnFailure(mDefaultStorage.Init(nullptr, GetStorageDirectory().ValueOr(nullptr)));
     ReturnLogErrorOnFailure(mOperationalKeystore.Init(&mDefaultStorage));
     ReturnLogErrorOnFailure(mOpCertStore.Init(&mDefaultStorage));
+
+    ReturnLogErrorOnFailure(sNodeIdStorage.Init(kNodeIdStoreName, GetStorageDirectory().ValueOr(nullptr)));
 
     // chip-tool uses a non-persistent keystore.
     // ICD storage lifetime is currently tied to the chip-tool's lifetime. Since chip-tool interactive mode is currently used for

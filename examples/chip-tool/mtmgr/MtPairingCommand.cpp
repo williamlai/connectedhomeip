@@ -326,6 +326,10 @@ CHIP_ERROR MtPairingCommand::PairWithMdns(NodeId remoteId)
 
 CHIP_ERROR MtPairingCommand::Unpair(NodeId remoteId)
 {
+    /* FIXME: Move the removal from storage to the callback. */
+    ScopedNodeId scopedNodeId(remoteId, mMtmgrCore.CurrentCommissioner().GetFabricIndex());
+    mMtmgrCore.GetNodeIdStorage().DeleteScopedNodeId(scopedNodeId);
+
     mCurrentFabricRemover = Platform::MakeUnique<Controller::CurrentFabricRemover>(&mMtmgrCore.CurrentCommissioner());
     return mCurrentFabricRemover->RemoveCurrentFabric(remoteId, &mCurrentFabricRemoveCallback);
 }
@@ -385,6 +389,9 @@ void MtPairingCommand::OnCommissioningComplete(NodeId nodeId, CHIP_ERROR err)
 {
     if (err == CHIP_NO_ERROR)
     {
+        ScopedNodeId scopedNodeId(mNodeId, mMtmgrCore.CurrentCommissioner().GetFabricIndex());
+        mMtmgrCore.GetNodeIdStorage().SetScopedNodeId(scopedNodeId, "NA", 2);
+
         ChipLogProgress(chipTool, "Device commissioning completed with success");
     }
     else
