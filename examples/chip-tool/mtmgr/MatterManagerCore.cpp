@@ -25,7 +25,8 @@ chip::app::DefaultICDClientStorage MatterManagerCore::sICDClientStorage;
 chip::Crypto::RawKeySessionKeystore MatterManagerCore::sSessionKeystore;
 chip::app::DefaultCheckInDelegate MatterManagerCore::sCheckInDelegate;
 chip::app::CheckInHandler MatterManagerCore::sCheckInHandler;
-NodeIdStorage sNodeIdStorage;
+
+NodeIdStorage MatterManagerCore::sNodeIdStorage;
 
 CHIP_ERROR GetAttestationTrustStore(const char * paaTrustStorePath, const chip::Credentials::AttestationTrustStore ** trustStore)
 {

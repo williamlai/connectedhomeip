@@ -24,7 +24,7 @@ constexpr char kLocalNodeIdKey[]           = "LocalNodeId";
 constexpr char kCommissionerCATsKey[]      = "CommissionerCATs";
 constexpr LogCategory kDefaultLoggingLevel = kLogCategory_Automation;
 
-const char * GetUsedDirectory(const char * directory)
+static const char * GetUsedDirectory(const char * directory)
 {
     const char * dir = directory;
 
@@ -41,7 +41,7 @@ const char * GetUsedDirectory(const char * directory)
     return dir;
 }
 
-std::string GetFilename(const char * directory, const char * name)
+static std::string GetFilename(const char * directory, const char * name)
 {
     const char * dir = GetUsedDirectory(directory);
 
