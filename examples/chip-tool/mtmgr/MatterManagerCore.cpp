@@ -76,13 +76,13 @@ CHIP_ERROR MatterManagerCore::SetUpStack()
     ReturnLogErrorOnFailure(mOperationalKeystore.Init(&mDefaultStorage));
     ReturnLogErrorOnFailure(mOpCertStore.Init(&mDefaultStorage));
 
-    ReturnLogErrorOnFailure(sNodeIdStorage.Init(kNodeIdStoreName, GetStorageDirectory().ValueOr(nullptr)));
-
     // chip-tool uses a non-persistent keystore.
     // ICD storage lifetime is currently tied to the chip-tool's lifetime. Since chip-tool interactive mode is currently used for
     // ICD commissioning and check-in validation, this temporary storage meets the test requirements.
     // TODO: Implement persistent ICD storage for the chip-tool.
     ReturnLogErrorOnFailure(sICDClientStorage.Init(&mDefaultStorage, &sSessionKeystore));
+
+    ReturnLogErrorOnFailure(sNodeIdStorage.Init(kNodeIdStoreName, GetStorageDirectory().ValueOr(nullptr)));
 
     chip::Controller::FactoryInitParams factoryInitParams;
 

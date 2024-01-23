@@ -28,27 +28,35 @@ extern "C" {
 extern "C" {
 #endif
 
+#if 1
 ExampleCredentialIssuerCommands credIssuerCommands;
 MatterManagerCore sMtmgrCore(&credIssuerCommands);
-
-#if 0
-void Mtmgr_test()
-{
-    // CHIP_ERROR err = CHIP_NO_ERROR;
-    MatterManagerCore mtmgrCore(&credIssuerCommands);
-
-    // MtPairOnNetworkLong paringOnNetworkLong(mtmgrCore, 41, 12345678, 1001);
-    // err = paringOnNetworkLong.Run();
-    // std::cout << "paringOnNetworkLong.Run() ret:" << err.AsString() << std::endl;
-
-    MtDiscoverCommissionablesCommand discoverCommissionables(mtmgrCore);
-    discoverCommissionables.setDiscoverOnce(false);
-    discoverCommissionables.setTimeout(chip::System::Clock::Seconds16(1));
-    err = discoverCommissionables.Run();
-    std::cout << "discoverCommissionables.Run() ret:" << err.AsString() << std::endl;
-}
 #endif
 
+void Mtmgr_test()
+{
+#if 0
+    NodeIdStorage sNodeIdStorage;
+
+    sNodeIdStorage.Init("node", nullptr);
+
+    chip::NodeId nodeId           = 41;
+    chip::FabricIndex fabricIndex = 1;
+    chip::ScopedNodeId scopedNodeId1(nodeId, fabricIndex);
+    sNodeIdStorage.SetScopedNodeId(scopedNodeId1, "test", 4);
+
+    std::vector<chip::ScopedNodeId> list = sNodeIdStorage.GetScopedNodeIdList();
+
+    std::cout << "Node List:" << std::endl;
+    for (auto & scopedNodeId : list)
+    {
+        std::cout << "Node ID: " << scopedNodeId.GetNodeId()
+                  << ", Fabric Index: " << static_cast<int>(scopedNodeId.GetFabricIndex()) << std::endl;
+    }
+#endif
+}
+
+#if 1
 mt_status_t matterMgr_init(void)
 {
     return MT_STATUS_OK;
@@ -83,7 +91,7 @@ mt_status_t matterMgr_getNetworkInfo(matter_net_t * ret_net_info)
 
     return res;
 }
-
+#endif
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

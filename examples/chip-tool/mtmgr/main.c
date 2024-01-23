@@ -1,12 +1,44 @@
 #include <stdio.h>
+#include <unistd.h>
 
 #include "MatterManager.h"
 
+static void getMatterNetworkInfo()
+{
+    matter_net_t mtnet;
+
+    if (matterMgr_getNetworkInfo(&mtnet) == MT_STATUS_OK)
+    {
+        printf("Device node count: %zu\n", mtnet.node_cnt);
+    }
+}
+
 int main(int argc, char * argv[])
 {
-    matterMgr_init();
 
-    matterMgr_isReady();
+    if (matterMgr_init() != MT_STATUS_OK)
+    {
+        printf("Failed to initialize Matter Manager.\n");
+    }
+    else
+    {
+        int i                   = 0;
+        const int maxRetryCount = 10;
+        while (matterMgr_isReady() != MT_STATUS_OK && i < maxRetryCount)
+        {
+            sleep(1);
+            i++;
+        }
+
+        if (i == maxRetryCount)
+        {
+            printf("Timeout for waiting for the Matter Manager to be ready.\n");
+        }
+        else
+        {
+            getMatterNetworkInfo();
+        }
+    }
 
     matterMgr_deInit();
 

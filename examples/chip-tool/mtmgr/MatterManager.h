@@ -10,6 +10,8 @@ extern "C" {
 
 #include "matter_mgr_status.h"
 
+void Mtmgr_test();
+
 mt_status_t matterMgr_init(void);
 
 mt_status_t matterMgr_isReady(void);
