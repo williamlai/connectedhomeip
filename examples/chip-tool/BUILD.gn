@@ -139,6 +139,7 @@ static_library("mtmgr") {
     "mtmgr/MtCommand.cpp",
     "mtmgr/MtDiscoverCommissionablesCommand.cpp",
     "mtmgr/MtPairingCommand.cpp",
+    "mtmgr/MtWaitForCommissioneeCommand.cpp",
     "mtmgr/NodeIdStorage.cpp"
   ]
 

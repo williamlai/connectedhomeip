@@ -51,6 +51,8 @@ int main(int argc, char * argv[])
         else
         {
             getMatterNetworkInfo();
+
+            matterMgr_test();
         }
     }
 

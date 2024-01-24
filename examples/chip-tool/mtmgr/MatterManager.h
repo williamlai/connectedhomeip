@@ -24,22 +24,39 @@ extern "C" {
 
 #include "matter_mgr_status.h"
 
+void matterMgr_test(void);
+
 mt_status_t matterMgr_init(void);
 
 mt_status_t matterMgr_isReady(void);
 
 mt_status_t matterMgr_deInit(void);
 
-typedef uint16_t matter_nodeId_t;
+typedef uint64_t matter_nodeId_t;
 
 typedef struct
 {
-    // uint8_t home_id;
-    // matter_nodeId_t ctl_id;
+    /** More Matter network info. Ex. controller node id, fabric count, home fabric index, ... */
+
     size_t node_cnt;
 } matter_net_t;
 
 mt_status_t matterMgr_getNetworkInfo(matter_net_t * ret_net_info);
+
+mt_status_t matterMgr_getNodeIdList(matter_nodeId_t * ret_node_id_arry, size_t * node_cnt);
+
+typedef struct
+{
+    matter_nodeId_t id;
+    uint16_t vendor_id;
+    uint16_t vendor_type;
+    uint16_t product_id;
+    uint16_t protocol_ver;
+
+    /** More Matter node info... */
+} matter_node_t;
+
+mt_status_t matterMgr_getDetailedNodeInfo(matter_nodeId_t node_id, matter_node_t * ret_node);
 
 void mtmgr_test();
 
