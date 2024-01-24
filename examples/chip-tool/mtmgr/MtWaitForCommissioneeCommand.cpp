@@ -39,7 +39,37 @@ void MtWaitForCommissioneeCommand::OnDeviceConnectedFn(void * context, Messaging
 {
     auto * command = reinterpret_cast<MtWaitForCommissioneeCommand *>(context);
     VerifyOrReturn(command != nullptr, ChipLogError(chipTool, "OnDeviceConnectedFn: context is null"));
-    command->SetCommandExitStatus(CHIP_NO_ERROR);
+    // command->SetCommandExitStatus(CHIP_NO_ERROR);
+
+    app::InteractionModelEngine * engine = app::InteractionModelEngine::GetInstance();
+    app::ReadPrepareParams readParams(sessionHandle);
+
+    readParams.mIsFabricFiltered = false;
+
+    // NOTE: this array cannot have more than 9 entries, since the spec mandates that server only needs to support 9
+    app::AttributePathParams readPaths[9];
+    // Read all the feature maps for all the networking clusters on any endpoint to determine what is supported
+    readPaths[0] = app::AttributePathParams(app::Clusters::NetworkCommissioning::Id,
+                                            app::Clusters::NetworkCommissioning::Attributes::FeatureMap::Id);
+
+    readParams.mpAttributePathParamsList    = readPaths;
+    readParams.mAttributePathParamsListSize = 1;
+
+    auto attributeCache = Platform::MakeUnique<app::ClusterStateCache>(*command);
+    auto readClient     = chip::Platform::MakeUnique<app::ReadClient>(engine, &exchangeMgr, attributeCache->GetBufferedCallback(),
+                                                                  app::ReadClient::InteractionType::Read);
+
+    CHIP_ERROR err = readClient->SendRequest(readParams);
+    if (err != CHIP_NO_ERROR)
+    {
+        LogErrorOnFailure(err);
+
+        ChipLogError(Controller, "Failed to send read request for networking clusters");
+        return;
+    }
+
+    command->mAttributeCache = std::move(attributeCache);
+    command->mReadClient     = std::move(readClient);
 }
 
 void MtWaitForCommissioneeCommand::OnDeviceConnectionFailureFn(void * context, const chip::ScopedNodeId & peerId, CHIP_ERROR err)
@@ -49,4 +79,10 @@ void MtWaitForCommissioneeCommand::OnDeviceConnectionFailureFn(void * context, c
     auto * command = reinterpret_cast<MtWaitForCommissioneeCommand *>(context);
     VerifyOrReturn(command != nullptr, ChipLogError(chipTool, "OnDeviceConnectionFailureFn: context is null"));
     command->SetCommandExitStatus(err);
+}
+
+// ClusterStateCache::Callback impl
+void MtWaitForCommissioneeCommand::OnDone(app::ReadClient *)
+{
+    std::cout << "MtWaitForCommissioneeCommand::OnDone" << std::endl;
 }

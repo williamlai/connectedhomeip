@@ -19,10 +19,12 @@
 #pragma once
 
 #include "MtCommand.h"
+
+#include <app/ClusterStateCache.h>
 #include <app/OperationalSessionSetup.h>
 #include <lib/core/CHIPCallback.h>
 
-class MtWaitForCommissioneeCommand : public MtCommand
+class MtWaitForCommissioneeCommand : public MtCommand, public chip::app::ClusterStateCache::Callback
 {
 public:
     MtWaitForCommissioneeCommand(MatterManagerCore & mtmgrCore, NodeId nodeId) :
@@ -38,6 +40,8 @@ public:
 
     void setTimeout(uint16_t timeout) { mTimeoutSecs.SetValue(timeout); }
 
+    void OnDone(chip::app::ReadClient *) override;
+
 private:
     chip::NodeId mNodeId;
     chip::Optional<uint16_t> mTimeoutSecs;
@@ -49,4 +53,7 @@ private:
 
     chip::Callback::Callback<chip::OnDeviceConnected> mOnDeviceConnectedCallback;
     chip::Callback::Callback<chip::OnDeviceConnectionFailure> mOnDeviceConnectionFailureCallback;
+
+    chip::Platform::UniquePtr<chip::app::ClusterStateCache> mAttributeCache;
+    chip::Platform::UniquePtr<chip::app::ReadClient> mReadClient;
 };
