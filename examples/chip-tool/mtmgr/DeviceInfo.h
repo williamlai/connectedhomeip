@@ -1,19 +1,15 @@
 /*
- *   Copyright (c) 2023 Project CHIP Authors
- *   All rights reserved.
+ * Copyright 2023-2024 Amazon.com, Inc. or its affiliates. All rights reserved.
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * AMAZON PROPRIETARY/CONFIDENTIAL
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * You may not use this file except in compliance with the terms and
+ * conditions set forth in the accompanying LICENSE.TXT file.
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
+ * THESE MATERIALS ARE PROVIDED ON AN "AS IS" BASIS. AMAZON SPECIFICALLY
+ * DISCLAIMS, WITH RESPECT TO THESE MATERIALS, ALL WARRANTIES, EXPRESS,
+ * IMPLIED, OR STATUTORY, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 
 #pragma once
@@ -24,10 +20,10 @@
 #include <app/OperationalSessionSetup.h>
 #include <lib/core/CHIPCallback.h>
 
-class MtWaitForCommissioneeCommand : public MtCommand
+class DeviceInfo : public MtCommand, public chip::app::ClusterStateCache::Callback
 {
 public:
-    MtWaitForCommissioneeCommand(MatterManagerCore & mtmgrCore, NodeId nodeId) :
+    DeviceInfo(MatterManagerCore & mtmgrCore, NodeId nodeId) :
         MtCommand(mtmgrCore), mOnDeviceConnectedCallback(OnDeviceConnectedFn, this),
         mOnDeviceConnectionFailureCallback(OnDeviceConnectionFailureFn, this)
     {
@@ -40,6 +36,8 @@ public:
 
     void setTimeout(uint16_t timeout) { mTimeoutSecs.SetValue(timeout); }
 
+    void OnDone(chip::app::ReadClient *) override;
+
 private:
     chip::NodeId mNodeId;
     chip::Optional<uint16_t> mTimeoutSecs;
@@ -51,4 +49,7 @@ private:
 
     chip::Callback::Callback<chip::OnDeviceConnected> mOnDeviceConnectedCallback;
     chip::Callback::Callback<chip::OnDeviceConnectionFailure> mOnDeviceConnectionFailureCallback;
+
+    chip::Platform::UniquePtr<chip::app::ClusterStateCache> mAttributeCache;
+    chip::Platform::UniquePtr<chip::app::ReadClient> mReadClient;
 };

@@ -29,7 +29,16 @@ CHIP_ERROR MtCommand::Run()
 
 static void OnResponseTimeout(chip::System::Layer *, void * appState)
 {
-    (reinterpret_cast<MtCommand *>(appState))->SetCommandExitStatus(CHIP_ERROR_TIMEOUT);
+    auto command = reinterpret_cast<MtCommand *>(appState);
+
+    if (command->IsWaitingForResponse())
+    {
+        command->SetCommandExitStatus(CHIP_ERROR_TIMEOUT);
+    }
+    else
+    {
+        command->SetCommandExit();
+    }
 }
 
 void MtCommand::SetCommandExitStatus(CHIP_ERROR status)
@@ -46,10 +55,12 @@ CHIP_ERROR MtCommand::StartWaiting(chip::System::Clock::Timeout duration)
 {
     if (duration.count() > 0)
     {
+        std::cout << "++ StartWaiting ++" << std::endl;
         {
             std::lock_guard<std::mutex> lk(cvWaitingForResponseMutex);
             mWaitingForResponse = true;
         }
+        std::cout << "-- StartWaiting --" << std::endl;
 
         ReturnLogErrorOnFailure(chip::DeviceLayer::SystemLayer().StartTimer(duration, OnResponseTimeout, this));
 
@@ -64,9 +75,19 @@ CHIP_ERROR MtCommand::StartWaiting(chip::System::Clock::Timeout duration)
 
 void MtCommand::StopWaiting()
 {
+    std::cout << "++ StopWaiting ++" << std::endl;
     {
-        std::lock_guard<std::mutex> lk(cvWaitingForResponseMutex);
-        mWaitingForResponse = false;
+        if (cvWaitingForResponseMutex.try_lock())
+        {
+            mWaitingForResponse = false;
+            cvWaitingForResponseMutex.unlock();
+        }
+        else
+        {
+            /* This function is called within the even loop. */
+            mWaitingForResponse = false;
+        }
     }
+    std::cout << "-- StopWaiting --" << std::endl;
     LogErrorOnFailure(chip::DeviceLayer::PlatformMgr().StopEventLoopTask());
 }

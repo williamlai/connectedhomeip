@@ -42,8 +42,11 @@ public:
     virtual chip::System::Clock::Timeout GetWaitDuration() const = 0;
 
     void SetCommandExitStatus(CHIP_ERROR status);
+    void SetCommandExit() { SetCommandExitStatus(mCommandExitStatus); }
     CHIP_ERROR StartWaiting(chip::System::Clock::Timeout seconds);
     void StopWaiting();
+
+    bool IsWaitingForResponse() { return mWaitingForResponse; }
 
 protected:
     MatterManagerCore & mMtmgrCore;
