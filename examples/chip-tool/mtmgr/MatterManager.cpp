@@ -16,7 +16,6 @@
 
 #include <vector>
 
-#include "DeviceInfo.h"
 #include "MatterManagerCore.h"
 #include "MtDiscoverCommissionablesCommand.h"
 #include "MtPairingCommand.h"
@@ -61,10 +60,6 @@ void matterMgr_test(void)
     ret = waitForCommissioneeCommand.Run();
     printf("%s(): waitForCommissioneeCommand ret:%d\n", __FUNCTION__, ret.AsInteger());
 #endif
-
-    DeviceInfo deviceInfo(sMtmgrCore, 41);
-    ret = deviceInfo.Run();
-    printf("%s(): deviceInfo ret:%d\n", __FUNCTION__, ret.AsInteger());
 
     printf("%s(): --\n", __FUNCTION__);
 }

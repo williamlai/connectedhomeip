@@ -30,15 +30,7 @@ CHIP_ERROR MtCommand::Run()
 static void OnResponseTimeout(chip::System::Layer *, void * appState)
 {
     auto command = reinterpret_cast<MtCommand *>(appState);
-
-    if (command->IsWaitingForResponse())
-    {
-        command->SetCommandExitStatus(CHIP_ERROR_TIMEOUT);
-    }
-    else
-    {
-        command->SetCommandExit();
-    }
+    command->SetCommandExitStatus(CHIP_ERROR_TIMEOUT);
 }
 
 void MtCommand::SetCommandExitStatus(CHIP_ERROR status)

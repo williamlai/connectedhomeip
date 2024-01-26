@@ -134,10 +134,10 @@ executable("chip-tool") {
 
 static_library("mtmgr") {
   sources = [
-    "mtmgr/DeviceInfo.cpp",
     "mtmgr/MatterManager.cpp",
     "mtmgr/MatterManagerCore.cpp",
     "mtmgr/MtCommand.cpp",
+    "mtmgr/MtModelCommand.cpp",
     "mtmgr/MtDiscoverCommissionablesCommand.cpp",
     "mtmgr/MtPairingCommand.cpp",
     "mtmgr/MtWaitForCommissioneeCommand.cpp",
