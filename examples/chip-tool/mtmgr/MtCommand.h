@@ -50,6 +50,8 @@ public:
 protected:
     virtual void Shutdown() {}
 
+    virtual void Cleanup() {}
+
     MatterManagerCore & mMtmgrCore;
 
 private:

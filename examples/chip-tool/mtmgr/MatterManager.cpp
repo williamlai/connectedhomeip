@@ -19,6 +19,7 @@
 #include "MatterManagerCore.h"
 #include "MtDiscoverCommissionablesCommand.h"
 #include "MtPairingCommand.h"
+#include "MtReportCommand.h"
 #include "MtWaitForCommissioneeCommand.h"
 #include "NodeIdStorage.h"
 
@@ -60,6 +61,18 @@ void matterMgr_test(void)
     ret = waitForCommissioneeCommand.Run();
     printf("%s(): waitForCommissioneeCommand ret:%d\n", __FUNCTION__, ret.AsInteger());
 #endif
+
+    {
+        using namespace chip::app::Clusters::BasicInformation;
+
+        MtReadAttribute readAttribute(Id, Attributes::VendorID::Id, sMtmgrCore);
+        chip::NodeId nodeId = 41;
+        readAttribute.SetDestinationId(nodeId);
+        std::vector<chip::EndpointId> endPointId = { 0 };
+        readAttribute.SetEndPointId(endPointId);
+        ret = readAttribute.Run();
+        printf("%s(): readAttribute ret:%d\n", __FUNCTION__, ret.AsInteger());
+    }
 
     printf("%s(): --\n", __FUNCTION__);
 }

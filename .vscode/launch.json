@@ -45,6 +45,14 @@
             "cwd": "${workspaceFolder}"
         },
         {
+            "name": "Debug chip-tool basicinformation read vendor-id 41 0",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/chip-tool/chip-tool",
+            "args": ["basicinformation", "read", "vendor-id", "41", "0"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Attach to running process",
             "type": "lldb",
             "request": "attach",

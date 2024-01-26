@@ -69,6 +69,16 @@ public:
 
     void Shutdown() override;
 
+    void SetDestinationId(chip::NodeId nodeId)
+    {
+        mDestinationId = nodeId;
+    }
+
+    void SetEndPointId(std::vector<chip::EndpointId> & endPointId)
+    {
+        mEndPointId = endPointId;
+    }
+
 protected:
     chip::Optional<uint16_t> mTimeout;
 
