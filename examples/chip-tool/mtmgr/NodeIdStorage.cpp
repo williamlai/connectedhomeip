@@ -236,7 +236,6 @@ chip::ScopedNodeId ConvertKeyToScopedNodeId(std::string key)
 
     ss >> nodeId >> fabricIndexInt;
 
-    std::cout << "fabricIndexInt: " << fabricIndexInt << std::endl;
     fabricIndex = static_cast<FabricIndex>(fabricIndexInt);
 
     return chip::ScopedNodeId(nodeId, fabricIndex);

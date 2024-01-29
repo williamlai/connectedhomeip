@@ -48,10 +48,9 @@ mt_status_t matterMgr_getNodeIdList(matter_nodeId_t * ret_node_id_arry, size_t *
 typedef struct
 {
     matter_nodeId_t id;
+    uint16_t data_model_revision;
     uint16_t vendor_id;
-    uint16_t vendor_type;
     uint16_t product_id;
-    uint16_t protocol_ver;
 
     /** More Matter node info... */
 } matter_node_t;

@@ -16,6 +16,33 @@
 
 #include "MtReportCommand.h"
 
+class ReportBasicInformationDataModelRevision : public MtReadAttribute
+{
+public:
+    ReportBasicInformationDataModelRevision(MatterManagerCore & mtmgrCore, chip::NodeId nodeId,
+                                            std::vector<chip::EndpointId> endPointId) :
+        MtReadAttribute(chip::app::Clusters::BasicInformation::Id,
+                        chip::app::Clusters::BasicInformation::Attributes::DataModelRevision::Id, mtmgrCore)
+    {
+        SetDestinationId(nodeId);
+        SetEndPointId(endPointId);
+    }
+
+    void OnAttributeDataAvailable(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data) override
+    {
+        if (path.mClusterId == chip::app::Clusters::BasicInformation::Id &&
+            path.mAttributeId == chip::app::Clusters::BasicInformation::Attributes::DataModelRevision::Id)
+        {
+            chip::app::DataModel::Decode(*data, mDataModelRevision);
+        }
+    }
+
+    uint16_t GetDataModelRevision() const { return mDataModelRevision; }
+
+private:
+    uint16_t mDataModelRevision;
+};
+
 class ReportBasicInformationVendorId : public MtReadAttribute
 {
 public:
@@ -41,3 +68,59 @@ public:
 private:
     chip::VendorId mVendorId;
 };
+
+class ReportBasicInformationProductID : public MtReadAttribute
+{
+public:
+    ReportBasicInformationProductID(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, std::vector<chip::EndpointId> endPointId) :
+        MtReadAttribute(chip::app::Clusters::BasicInformation::Id, chip::app::Clusters::BasicInformation::Attributes::ProductID::Id,
+                        mtmgrCore)
+    {
+        SetDestinationId(nodeId);
+        SetEndPointId(endPointId);
+    }
+
+    void OnAttributeDataAvailable(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data) override
+    {
+        if (path.mClusterId == chip::app::Clusters::BasicInformation::Id &&
+            path.mAttributeId == chip::app::Clusters::BasicInformation::Attributes::ProductID::Id)
+        {
+            chip::app::DataModel::Decode(*data, mProductID);
+        }
+    }
+
+    uint16_t GetProductID() const { return mProductID; }
+
+private:
+    uint16_t mProductID;
+};
+
+namespace ReportBasicInformation {
+static CHIP_ERROR GetDataModelRevision(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, std::vector<chip::EndpointId> endPointId,
+                                       uint16_t & dataModelRevision)
+{
+    ReportBasicInformationDataModelRevision reportBasicInfo(mtmgrCore, nodeId, endPointId);
+    ReturnErrorOnFailure(reportBasicInfo.Run());
+    dataModelRevision = reportBasicInfo.GetDataModelRevision();
+    return CHIP_NO_ERROR;
+}
+
+static CHIP_ERROR GetVendorId(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, std::vector<chip::EndpointId> endPointId,
+                              chip::VendorId & vendorId)
+{
+    ReportBasicInformationVendorId reportBasicInfo(mtmgrCore, nodeId, endPointId);
+    ReturnErrorOnFailure(reportBasicInfo.Run());
+    vendorId = reportBasicInfo.GetVendorId();
+    return CHIP_NO_ERROR;
+}
+
+static CHIP_ERROR GetProductID(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, std::vector<chip::EndpointId> endPointId,
+                               uint16_t & productId)
+{
+    ReportBasicInformationProductID reportBasicInfo(mtmgrCore, nodeId, endPointId);
+    ReturnErrorOnFailure(reportBasicInfo.Run());
+    productId = reportBasicInfo.GetProductID();
+    return CHIP_NO_ERROR;
+}
+
+} // namespace ReportBasicInformation

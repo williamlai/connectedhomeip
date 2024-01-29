@@ -47,12 +47,10 @@ CHIP_ERROR MtCommand::StartWaiting(chip::System::Clock::Timeout duration)
 {
     if (duration.count() > 0)
     {
-        std::cout << "++ StartWaiting ++" << std::endl;
         {
             std::lock_guard<std::mutex> lk(cvWaitingForResponseMutex);
             mWaitingForResponse = true;
         }
-        std::cout << "-- StartWaiting --" << std::endl;
 
         ReturnLogErrorOnFailure(chip::DeviceLayer::SystemLayer().StartTimer(duration, OnResponseTimeout, this));
 
@@ -67,7 +65,6 @@ CHIP_ERROR MtCommand::StartWaiting(chip::System::Clock::Timeout duration)
 
 void MtCommand::StopWaiting()
 {
-    std::cout << "++ StopWaiting ++" << std::endl;
     {
         if (cvWaitingForResponseMutex.try_lock())
         {
@@ -80,6 +77,5 @@ void MtCommand::StopWaiting()
             mWaitingForResponse = false;
         }
     }
-    std::cout << "-- StopWaiting --" << std::endl;
     LogErrorOnFailure(chip::DeviceLayer::PlatformMgr().StopEventLoopTask());
 }

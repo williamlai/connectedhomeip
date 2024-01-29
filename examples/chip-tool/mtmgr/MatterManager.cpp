@@ -57,20 +57,6 @@ void matterMgr_test(void)
     ret = pairOnNetworkLong.Run();
     printf("%s(): pairOnNetworkLong ret:%d\n", __FUNCTION__, ret.AsInteger());
 
-#if 0
-    MtWaitForCommissioneeCommand waitForCommissioneeCommand(sMtmgrCore, 41);
-    ret = waitForCommissioneeCommand.Run();
-    printf("%s(): waitForCommissioneeCommand ret:%d\n", __FUNCTION__, ret.AsInteger());
-#endif
-
-    chip::NodeId nodeId                      = 41;
-    std::vector<chip::EndpointId> endPointId = { 0 };
-    ReportBasicInformationVendorId reportVendorId(sMtmgrCore, nodeId, endPointId);
-    ret = reportVendorId.Run();
-    printf("%s(): readAttribute ret:%d\n", __FUNCTION__, ret.AsInteger());
-
-    printf("VendorId: %d\n", reportVendorId.GetVendorId());
-
     printf("%s(): --\n", __FUNCTION__);
 }
 
@@ -140,8 +126,28 @@ mt_status_t matterMgr_getNodeIdList(matter_nodeId_t * ret_node_id_arry, size_t *
     return res;
 }
 
-static CHIP_ERROR getDetailedNodeInfo(chip::NodeId nodeId)
+static CHIP_ERROR getDetailedNodeInfo(chip::NodeId nodeId, matter_node_t * ret_node)
 {
+    std::vector<chip::EndpointId> endPointId = { 0 };
+    uint16_t dataModelRevision;
+    chip::VendorId vendorId;
+    uint16_t productID;
+
+    if (ReportBasicInformation::GetDataModelRevision(sMtmgrCore, nodeId, endPointId, dataModelRevision) == CHIP_NO_ERROR)
+    {
+        ret_node->data_model_revision = dataModelRevision;
+    }
+
+    if (ReportBasicInformation::GetVendorId(sMtmgrCore, nodeId, endPointId, vendorId) == CHIP_NO_ERROR)
+    {
+        ret_node->vendor_id = static_cast<uint16_t>(vendorId);
+    }
+
+    if (ReportBasicInformation::GetProductID(sMtmgrCore, nodeId, endPointId, productID) == CHIP_NO_ERROR)
+    {
+        ret_node->product_id = productID;
+    }
+
     return CHIP_NO_ERROR;
 }
 
@@ -157,7 +163,16 @@ mt_status_t matterMgr_getDetailedNodeInfo(matter_nodeId_t node_id, matter_node_t
     {
         chip::NodeId nodeId = static_cast<chip::NodeId>(node_id);
 
-        getDetailedNodeInfo(nodeId);
+        memset(ret_node, 0, sizeof(matter_node_t));
+
+        if (getDetailedNodeInfo(nodeId, ret_node) != CHIP_NO_ERROR)
+        {
+            res = MT_STATUS_GENERAL_ERROR;
+        }
+        else
+        {
+            /* nop */
+        }
     }
 
     return res;
