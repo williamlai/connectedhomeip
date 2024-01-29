@@ -135,13 +135,22 @@ executable("chip-tool") {
 static_library("mtmgr") {
   sources = [
     "mtmgr/MatterManager.cpp",
+    "mtmgr/MatterManager.h",
     "mtmgr/MatterManagerCore.cpp",
+    "mtmgr/MatterManagerCore.h",
     "mtmgr/MtCommand.cpp",
-    "mtmgr/MtModelCommand.cpp",
+    "mtmgr/MtCommand.h",
     "mtmgr/MtDiscoverCommissionablesCommand.cpp",
+    "mtmgr/MtDiscoverCommissionablesCommand.h",
+    "mtmgr/MtModelCommand.cpp",
+    "mtmgr/MtModelCommand.h",
     "mtmgr/MtPairingCommand.cpp",
+    "mtmgr/MtPairingCommand.h",
+    "mtmgr/MtReportCommand.h",
     "mtmgr/MtWaitForCommissioneeCommand.cpp",
-    "mtmgr/NodeIdStorage.cpp"
+    "mtmgr/MtWaitForCommissioneeCommand.h",
+    "mtmgr/NodeIdStorage.cpp",
+    "mtmgr/NodeIdStorage.h"
   ]
 
   public_configs = [ ":config" ]

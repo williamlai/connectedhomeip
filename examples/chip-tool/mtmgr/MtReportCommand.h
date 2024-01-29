@@ -21,8 +21,9 @@
 #include <app/tests/suites/commands/interaction_model/InteractionModel.h>
 
 /* FIXME: DataModelLogger.h is a dependency source comes from CHIP-tool*/
-#include "MtModelCommand.h"
 #include "commands/clusters/DataModelLogger.h"
+
+#include "MtModelCommand.h"
 
 class MtReportCommand : public InteractionModelReports, public MtModelCommand, public chip::app::ReadClient::Callback
 {
@@ -61,7 +62,11 @@ public:
             mError = error;
             return;
         }
+
+        OnAttributeDataAvailable(path, data);
     }
+
+    virtual void OnAttributeDataAvailable(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data) {}
 
     void OnEventData(const chip::app::EventHeader & eventHeader, chip::TLV::TLVReader * data,
                      const chip::app::StatusIB * status) override

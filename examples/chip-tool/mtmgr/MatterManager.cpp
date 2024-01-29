@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "BasicInformation.h"
 #include "MatterManagerCore.h"
 #include "MtDiscoverCommissionablesCommand.h"
 #include "MtPairingCommand.h"
@@ -62,17 +63,13 @@ void matterMgr_test(void)
     printf("%s(): waitForCommissioneeCommand ret:%d\n", __FUNCTION__, ret.AsInteger());
 #endif
 
-    {
-        using namespace chip::app::Clusters::BasicInformation;
+    chip::NodeId nodeId                      = 41;
+    std::vector<chip::EndpointId> endPointId = { 0 };
+    ReportBasicInformationVendorId reportVendorId(sMtmgrCore, nodeId, endPointId);
+    ret = reportVendorId.Run();
+    printf("%s(): readAttribute ret:%d\n", __FUNCTION__, ret.AsInteger());
 
-        MtReadAttribute readAttribute(Id, Attributes::VendorID::Id, sMtmgrCore);
-        chip::NodeId nodeId = 41;
-        readAttribute.SetDestinationId(nodeId);
-        std::vector<chip::EndpointId> endPointId = { 0 };
-        readAttribute.SetEndPointId(endPointId);
-        ret = readAttribute.Run();
-        printf("%s(): readAttribute ret:%d\n", __FUNCTION__, ret.AsInteger());
-    }
+    printf("VendorId: %d\n", reportVendorId.GetVendorId());
 
     printf("%s(): --\n", __FUNCTION__);
 }
