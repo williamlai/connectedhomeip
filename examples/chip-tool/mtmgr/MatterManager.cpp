@@ -16,13 +16,14 @@
 
 #include <vector>
 
-#include "BasicInformation.h"
 #include "MatterManagerCore.h"
 #include "MtDiscoverCommissionablesCommand.h"
 #include "MtPairingCommand.h"
 #include "MtReportCommand.h"
 #include "MtWaitForCommissioneeCommand.h"
 #include "NodeIdStorage.h"
+#include "ReportBasicInformation.h"
+#include "ReportDescriptor.h"
 
 #include <lib/core/CASEAuthTag.h>
 
@@ -50,12 +51,28 @@ MatterManagerCore sMtmgrCore(&credIssuerCommands);
 
 void matterMgr_test(void)
 {
-    CHIP_ERROR ret;
+    [[maybe_unused]] CHIP_ERROR ret;
     printf("%s(): ++\n", __FUNCTION__);
 
+#if 0
     MtPairOnNetworkLong pairOnNetworkLong(sMtmgrCore, 41, 12345678LLU, 1001);
     ret = pairOnNetworkLong.Run();
     printf("%s(): pairOnNetworkLong ret:%d\n", __FUNCTION__, ret.AsInteger());
+#endif
+
+#if 0
+    {
+        using namespace chip::app::Clusters::BasicInformation;
+
+        MtReadAttribute readAttribute(Id, Attributes::AttributeList::Id, sMtmgrCore);
+        chip::NodeId nodeId = 41;
+        readAttribute.SetDestinationId(nodeId);
+        std::vector<chip::EndpointId> endPointId = { 0 };
+        readAttribute.SetEndPointId(endPointId);
+        ret = readAttribute.Run();
+        printf("%s(): readAttribute ret:%d\n", __FUNCTION__, ret.AsInteger());
+    }
+#endif
 
     printf("%s(): --\n", __FUNCTION__);
 }
@@ -128,24 +145,31 @@ mt_status_t matterMgr_getNodeIdList(matter_nodeId_t * ret_node_id_arry, size_t *
 
 static CHIP_ERROR getDetailedNodeInfo(chip::NodeId nodeId, matter_node_t * ret_node)
 {
-    std::vector<chip::EndpointId> endPointId = { 0 };
+    // chip::EndpointId endPointId         = 0;
+    chip::EndpointId endPointIdWildcard = 0xFFFF;
     uint16_t dataModelRevision;
     chip::VendorId vendorId;
     uint16_t productID;
+    std::unordered_map<chip::EndpointId, std::vector<chip::ClusterId>> serverList;
 
-    if (ReportBasicInformation::GetDataModelRevision(sMtmgrCore, nodeId, endPointId, dataModelRevision) == CHIP_NO_ERROR)
+    if (ReportBasicInformation::GetDataModelRevision(sMtmgrCore, nodeId, endPointIdWildcard, dataModelRevision) == CHIP_NO_ERROR)
     {
         ret_node->data_model_revision = dataModelRevision;
     }
 
-    if (ReportBasicInformation::GetVendorId(sMtmgrCore, nodeId, endPointId, vendorId) == CHIP_NO_ERROR)
+    if (ReportBasicInformation::GetVendorId(sMtmgrCore, nodeId, endPointIdWildcard, vendorId) == CHIP_NO_ERROR)
     {
         ret_node->vendor_id = static_cast<uint16_t>(vendorId);
     }
 
-    if (ReportBasicInformation::GetProductID(sMtmgrCore, nodeId, endPointId, productID) == CHIP_NO_ERROR)
+    if (ReportBasicInformation::GetProductID(sMtmgrCore, nodeId, endPointIdWildcard, productID) == CHIP_NO_ERROR)
     {
         ret_node->product_id = productID;
+    }
+
+    if (ReportDescriptor::GetServerList(sMtmgrCore, nodeId, endPointIdWildcard, serverList) == CHIP_NO_ERROR)
+    {
+        ret_node->endpoint_cnt = static_cast<uint16_t>(serverList.size());
     }
 
     return CHIP_NO_ERROR;

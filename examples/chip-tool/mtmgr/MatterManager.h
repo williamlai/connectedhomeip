@@ -52,6 +52,8 @@ typedef struct
     uint16_t vendor_id;
     uint16_t product_id;
 
+    uint16_t endpoint_cnt;
+
     /** More Matter node info... */
 } matter_node_t;
 

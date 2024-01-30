@@ -53,6 +53,14 @@
             "cwd": "${workspaceFolder}"
         },
         {
+            "name": "Debug chip-tool descriptor read server-list 41 0xFFFF",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/chip-tool/chip-tool",
+            "args": ["descriptor", "read", "server-list", "41", "0xFFFF"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Attach to running process",
             "type": "lldb",
             "request": "attach",

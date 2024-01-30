@@ -18,6 +18,8 @@
 
 #pragma once
 
+#define LOG_ONLY (0)
+
 #include <app/tests/suites/commands/interaction_model/InteractionModel.h>
 
 /* FIXME: DataModelLogger.h is a dependency source comes from CHIP-tool*/
@@ -53,6 +55,8 @@ public:
             return;
         }
 
+        /* The TLVReader data can only decode once. So either we log the data or use it. */
+#if LOG_ONLY
         LogErrorOnFailure(RemoteDataModelLogger::LogAttributeAsJSON(path, data));
 
         error = DataModelLogger::LogAttribute(path, data);
@@ -62,8 +66,9 @@ public:
             mError = error;
             return;
         }
-
+#else
         OnAttributeDataAvailable(path, data);
+#endif
     }
 
     virtual void OnAttributeDataAvailable(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data) {}
@@ -123,7 +128,10 @@ public:
         MtModelCommand::Shutdown();
     }
 
-    void Cleanup() override { InteractionModelReports::Shutdown(); }
+    void Cleanup() override
+    {
+        InteractionModelReports::Shutdown();
+    }
 
 protected:
     // Use a 3x-longer-than-default timeout because wildcard reads can take a

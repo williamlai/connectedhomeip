@@ -19,13 +19,14 @@
 class ReportBasicInformationDataModelRevision : public MtReadAttribute
 {
 public:
-    ReportBasicInformationDataModelRevision(MatterManagerCore & mtmgrCore, chip::NodeId nodeId,
-                                            std::vector<chip::EndpointId> endPointId) :
+    ReportBasicInformationDataModelRevision(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, chip::EndpointId endPointId) :
         MtReadAttribute(chip::app::Clusters::BasicInformation::Id,
                         chip::app::Clusters::BasicInformation::Attributes::DataModelRevision::Id, mtmgrCore)
     {
         SetDestinationId(nodeId);
-        SetEndPointId(endPointId);
+
+        std::vector<chip::EndpointId> endPointIdList = { endPointId };
+        SetEndPointId(endPointIdList);
     }
 
     void OnAttributeDataAvailable(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data) override
@@ -33,7 +34,17 @@ public:
         if (path.mClusterId == chip::app::Clusters::BasicInformation::Id &&
             path.mAttributeId == chip::app::Clusters::BasicInformation::Attributes::DataModelRevision::Id)
         {
-            chip::app::DataModel::Decode(*data, mDataModelRevision);
+            uint16_t value;
+
+            CHIP_ERROR error = chip::app::DataModel::Decode(*data, value);
+            if (CHIP_NO_ERROR != error)
+            {
+                ChipLogError(chipTool, "Response Failure: Can not decode Data");
+                mError = error;
+                return;
+            }
+
+            mDataModelRevision = value;
         }
     }
 
@@ -46,12 +57,14 @@ private:
 class ReportBasicInformationVendorId : public MtReadAttribute
 {
 public:
-    ReportBasicInformationVendorId(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, std::vector<chip::EndpointId> endPointId) :
+    ReportBasicInformationVendorId(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, chip::EndpointId endPointId) :
         MtReadAttribute(chip::app::Clusters::BasicInformation::Id, chip::app::Clusters::BasicInformation::Attributes::VendorID::Id,
                         mtmgrCore)
     {
         SetDestinationId(nodeId);
-        SetEndPointId(endPointId);
+
+        std::vector<chip::EndpointId> endPointIdList = { endPointId };
+        SetEndPointId(endPointIdList);
     }
 
     void OnAttributeDataAvailable(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data) override
@@ -59,7 +72,17 @@ public:
         if (path.mClusterId == chip::app::Clusters::BasicInformation::Id &&
             path.mAttributeId == chip::app::Clusters::BasicInformation::Attributes::VendorID::Id)
         {
-            chip::app::DataModel::Decode(*data, mVendorId);
+            chip::VendorId value;
+
+            CHIP_ERROR error = chip::app::DataModel::Decode(*data, mVendorId);
+            if (CHIP_NO_ERROR != error)
+            {
+                ChipLogError(chipTool, "Response Failure: Can not decode Data");
+                mError = error;
+                return;
+            }
+
+            mVendorId = value;
         }
     }
 
@@ -72,12 +95,14 @@ private:
 class ReportBasicInformationProductID : public MtReadAttribute
 {
 public:
-    ReportBasicInformationProductID(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, std::vector<chip::EndpointId> endPointId) :
+    ReportBasicInformationProductID(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, chip::EndpointId endPointId) :
         MtReadAttribute(chip::app::Clusters::BasicInformation::Id, chip::app::Clusters::BasicInformation::Attributes::ProductID::Id,
                         mtmgrCore)
     {
         SetDestinationId(nodeId);
-        SetEndPointId(endPointId);
+
+        std::vector<chip::EndpointId> endPointIdList = { endPointId };
+        SetEndPointId(endPointIdList);
     }
 
     void OnAttributeDataAvailable(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data) override
@@ -85,7 +110,17 @@ public:
         if (path.mClusterId == chip::app::Clusters::BasicInformation::Id &&
             path.mAttributeId == chip::app::Clusters::BasicInformation::Attributes::ProductID::Id)
         {
-            chip::app::DataModel::Decode(*data, mProductID);
+            uint16_t value;
+
+            CHIP_ERROR error = chip::app::DataModel::Decode(*data, mProductID);
+            if (CHIP_NO_ERROR != error)
+            {
+                ChipLogError(chipTool, "Response Failure: Can not decode Data");
+                mError = error;
+                return;
+            }
+
+            mProductID = value;
         }
     }
 
@@ -96,16 +131,17 @@ private:
 };
 
 namespace ReportBasicInformation {
-static CHIP_ERROR GetDataModelRevision(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, std::vector<chip::EndpointId> endPointId,
+static CHIP_ERROR GetDataModelRevision(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, chip::EndpointId endPointId,
                                        uint16_t & dataModelRevision)
 {
     ReportBasicInformationDataModelRevision reportBasicInfo(mtmgrCore, nodeId, endPointId);
     ReturnErrorOnFailure(reportBasicInfo.Run());
     dataModelRevision = reportBasicInfo.GetDataModelRevision();
+
     return CHIP_NO_ERROR;
 }
 
-static CHIP_ERROR GetVendorId(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, std::vector<chip::EndpointId> endPointId,
+static CHIP_ERROR GetVendorId(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, chip::EndpointId endPointId,
                               chip::VendorId & vendorId)
 {
     ReportBasicInformationVendorId reportBasicInfo(mtmgrCore, nodeId, endPointId);
@@ -114,7 +150,7 @@ static CHIP_ERROR GetVendorId(MatterManagerCore & mtmgrCore, chip::NodeId nodeId
     return CHIP_NO_ERROR;
 }
 
-static CHIP_ERROR GetProductID(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, std::vector<chip::EndpointId> endPointId,
+static CHIP_ERROR GetProductID(MatterManagerCore & mtmgrCore, chip::NodeId nodeId, chip::EndpointId endPointId,
                                uint16_t & productId)
 {
     ReportBasicInformationProductID reportBasicInfo(mtmgrCore, nodeId, endPointId);

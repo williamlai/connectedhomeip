@@ -29,11 +29,12 @@ static void printNodeInfo(matter_nodeId_t node_id)
         printf("Node ID:%" PRIu64 "\n", node_id);
         printf("    Data Model Revision: %d\n", node.data_model_revision);
         printf("    Vendor ID:           %d\n", node.vendor_id);
-        printf("    Product ID::         %d\n", node.product_id);
+        printf("    Product ID:          %d\n", node.product_id);
+        printf("    Endpoint Count:      %d\n", node.endpoint_cnt);
     }
 }
 
-static void printMatterNetworkInfo()
+[[maybe_unused]] static void printMatterNetworkInfo()
 {
     matter_net_t mtnet;
     size_t node_cnt = MAX_NODE_ID_ARRAY_SIZE;
