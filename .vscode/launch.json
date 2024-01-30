@@ -61,6 +61,14 @@
             "cwd": "${workspaceFolder}"
         },
         {
+            "name": "Debug chip-tool descriptor read-by-id 0x0000FFFB 41 1",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/chip-tool/chip-tool",
+            "args": ["descriptor", "read-by-id", "0x0000FFFB", "41", "1"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Attach to running process",
             "type": "lldb",
             "request": "attach",

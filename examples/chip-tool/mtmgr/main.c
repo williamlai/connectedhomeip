@@ -22,8 +22,33 @@
 #define MAX_NODE_ID_ARRAY_SIZE 10
 #define MAX_ENDPOINT_ID_ARRAY_SIZE 10
 #define MAX_CLUSTER_ID_ARRAY_SIZE 128
+#define MAX_ATTRIBUTE_ID_ARRAY_SIZE 1024
 
 #define SETUP_DEMO_DEVICE (1)
+
+static void printClusterInfo(matter_nodeId_t node_id, matter_epId_t endpoint_id, matter_clusterId_t cluster_id)
+{
+    matter_cluster_t cluster;
+    size_t attribute_cnt = MAX_ATTRIBUTE_ID_ARRAY_SIZE;
+    matter_attributeId_t attribute_id_array[MAX_ATTRIBUTE_ID_ARRAY_SIZE];
+
+    if (matterMgr_getDetailedClusterInfo(node_id, endpoint_id, cluster_id, &cluster) == MT_STATUS_OK)
+    {
+        printf("Node ID: %" PRIu64 ", Endpoint ID: %d, Cluster ID: %s(%d)\n", node_id, endpoint_id,
+               matterMgr_getClusterName(cluster_id), cluster_id);
+        printf("    Attribute Count: %zu\n", cluster.attribute_cnt);
+
+        if (matterMgr_getAttributeList(node_id, endpoint_id, cluster_id, attribute_id_array, &attribute_cnt) == MT_STATUS_OK)
+        {
+            printf("    Attribute List:");
+            for (size_t i = 0; i < attribute_cnt; i++)
+            {
+                printf(" %d", attribute_id_array[i]);
+            }
+            printf("\n");
+        }
+    }
+}
 
 static void printEndpointInfo(matter_nodeId_t node_id, matter_epId_t endpoint_id)
 {
@@ -38,12 +63,16 @@ static void printEndpointInfo(matter_nodeId_t node_id, matter_epId_t endpoint_id
 
         if (matterMgr_getClusterList(node_id, endpoint_id, cluster_id_array, &cluster_cnt) == MT_STATUS_OK)
         {
-            printf("    Cluster List:");
+            printf("    Cluster List:\n");
             for (size_t i = 0; i < cluster_cnt; i++)
             {
-                printf(" %d", cluster_id_array[i]);
+                printf("        %s(%d)\n", matterMgr_getClusterName(cluster_id_array[i]), cluster_id_array[i]);
             }
-            printf("\n");
+
+            for (size_t i = 0; i < cluster_cnt; i++)
+            {
+                printClusterInfo(node_id, endpoint_id, cluster_id_array[i]);
+            }
         }
     }
 }

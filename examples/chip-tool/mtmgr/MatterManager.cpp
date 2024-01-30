@@ -24,8 +24,11 @@
 #include "NodeIdStorage.h"
 #include "ReportBasicInformation.h"
 #include "ReportDescriptor.h"
+#include "ReportGeneric.h"
 
 #include <lib/core/CASEAuthTag.h>
+
+#include <app/util/util.h>
 
 #include <commands/common/CredentialIssuerCommands.h>
 #include <commands/example/ExampleCredentialIssuerCommands.h>
@@ -48,34 +51,6 @@ extern "C" {
 
 ExampleCredentialIssuerCommands credIssuerCommands;
 MatterManagerCore sMtmgrCore(&credIssuerCommands);
-
-void matterMgr_test(void)
-{
-    [[maybe_unused]] CHIP_ERROR ret;
-    printf("%s(): ++\n", __FUNCTION__);
-
-#if 1
-    MtPairOnNetworkLong pairOnNetworkLong(sMtmgrCore, 41, 12345678LLU, 1001);
-    ret = pairOnNetworkLong.Run();
-    printf("%s(): pairOnNetworkLong ret:%d\n", __FUNCTION__, ret.AsInteger());
-#endif
-
-#if 0
-    {
-        using namespace chip::app::Clusters::BasicInformation;
-
-        MtReadAttribute readAttribute(Id, Attributes::AttributeList::Id, sMtmgrCore);
-        chip::NodeId nodeId = 41;
-        readAttribute.SetDestinationId(nodeId);
-        std::vector<chip::EndpointId> endPointId = { 0 };
-        readAttribute.SetEndPointId(endPointId);
-        ret = readAttribute.Run();
-        printf("%s(): readAttribute ret:%d\n", __FUNCTION__, ret.AsInteger());
-    }
-#endif
-
-    printf("%s(): --\n", __FUNCTION__);
-}
 
 mt_status_t matterMgr_init(void)
 {
@@ -329,6 +304,85 @@ mt_status_t matterMgr_getClusterList(matter_nodeId_t node_id, matter_epId_t ep_i
                 }
                 *cluster_cnt = v.size();
             }
+        }
+    }
+
+    return res;
+}
+
+const char * matterMgr_getClusterName(matter_clusterId_t cluster_id)
+{
+    chip::ClusterId clusterId = static_cast<chip::ClusterId>(cluster_id);
+    uint16_t nameIndex        = emberAfFindClusterNameIndex(clusterId);
+    return zclClusterNames[nameIndex].name;
+}
+
+mt_status_t matterMgr_getDetailedClusterInfo(matter_nodeId_t node_id, matter_epId_t ep_id, matter_clusterId_t cluster_id,
+                                             matter_cluster_t * ret_cluster)
+{
+    mt_status_t res = MT_STATUS_OK;
+
+    if (ret_cluster == NULL)
+    {
+        res = MT_STATUS_BAD_PARAM;
+    }
+    else
+    {
+        chip::NodeId nodeId         = static_cast<chip::NodeId>(node_id);
+        chip::EndpointId endPointId = static_cast<chip::EndpointId>(ep_id);
+        chip::ClusterId clusterId   = static_cast<chip::ClusterId>(cluster_id);
+        std::vector<chip::AttributeId> attributeList;
+
+        memset(ret_cluster, 0, sizeof(matter_cluster_t));
+
+        if (ReportGeneric::GetAttributeList(sMtmgrCore, nodeId, endPointId, clusterId, attributeList) != CHIP_NO_ERROR)
+        {
+            res = MT_STATUS_GENERAL_ERROR;
+        }
+        else
+        {
+            ret_cluster->node_id       = node_id;
+            ret_cluster->ep_id         = ep_id;
+            ret_cluster->cluster_id    = cluster_id;
+            ret_cluster->attribute_cnt = attributeList.size();
+        }
+    }
+
+    return res;
+}
+
+mt_status_t matterMgr_getAttributeList(matter_nodeId_t node_id, matter_epId_t ep_id, matter_clusterId_t cluster_id,
+                                       matter_attributeId_t * ret_attribute_array, size_t * attribute_cnt)
+{
+    mt_status_t res = MT_STATUS_OK;
+
+    if (ret_attribute_array == NULL || attribute_cnt == NULL)
+    {
+
+        res = MT_STATUS_BAD_PARAM;
+    }
+    else
+    {
+        chip::NodeId nodeId         = static_cast<chip::NodeId>(node_id);
+        chip::EndpointId endPointId = static_cast<chip::EndpointId>(ep_id);
+        chip::ClusterId clusterId   = static_cast<chip::ClusterId>(cluster_id);
+        std::vector<chip::AttributeId> attributeList;
+
+        if (ReportGeneric::GetAttributeList(sMtmgrCore, nodeId, endPointId, clusterId, attributeList) != CHIP_NO_ERROR)
+        {
+            res = MT_STATUS_GENERAL_ERROR;
+        }
+        else if (*attribute_cnt < attributeList.size())
+        {
+            res = MT_STATUS_GENERAL_ERROR;
+        }
+        else
+        {
+            for (size_t i = 0; i < attributeList.size(); i++)
+            {
+                ret_attribute_array[i] = static_cast<matter_attributeId_t>(attributeList[i]);
+            }
+            *attribute_cnt = attributeList.size();
         }
     }
 

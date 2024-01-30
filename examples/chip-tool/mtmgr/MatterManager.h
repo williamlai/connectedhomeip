@@ -80,7 +80,24 @@ typedef uint32_t matter_clusterId_t;
 mt_status_t matterMgr_getClusterList(matter_nodeId_t node_id, matter_epId_t ep_id, matter_clusterId_t * ret_cluster_array,
                                      size_t * cluster_cnt);
 
-void mtmgr_test();
+const char * matterMgr_getClusterName(matter_clusterId_t cluster_id);
+
+typedef struct
+{
+    matter_nodeId_t node_id;
+    matter_epId_t ep_id;
+    matter_clusterId_t cluster_id;
+
+    size_t attribute_cnt;
+} matter_cluster_t;
+
+typedef uint32_t matter_attributeId_t;
+
+mt_status_t matterMgr_getDetailedClusterInfo(matter_nodeId_t node_id, matter_epId_t ep_id, matter_clusterId_t cluster_id,
+                                             matter_cluster_t * ret_cluster);
+
+mt_status_t matterMgr_getAttributeList(matter_nodeId_t node_id, matter_epId_t ep_id, matter_clusterId_t cluster_id,
+                                       matter_attributeId_t * ret_attribute_array, size_t * attribute_cnt);
 
 #ifdef __cplusplus
 } /* extern "C" */
