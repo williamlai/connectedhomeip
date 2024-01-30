@@ -23,6 +23,8 @@
 #define MAX_ENDPOINT_ID_ARRAY_SIZE 10
 #define MAX_CLUSTER_ID_ARRAY_SIZE 128
 
+#define SETUP_DEMO_DEVICE (1)
+
 static void printEndpointInfo(matter_nodeId_t node_id, matter_epId_t endpoint_id)
 {
     matter_endpoint_t endpoint;
@@ -89,6 +91,20 @@ static void printNodeInfo(matter_nodeId_t node_id)
     {
         printf("Device node count: %zu\n", mtnet.node_cnt);
 
+#if SETUP_DEMO_DEVICE
+        if (mtnet.node_cnt == 0)
+        {
+            printf("Try to pair device...\n");
+            matter_nodeId_t node_id      = 41;
+            uint32_t pinCode             = 12345678;
+            uint16_t discoveryFilterCode = 1001;
+            if (matterMgr_pairOnNetworkLong(node_id, pinCode, discoveryFilterCode) != MT_STATUS_OK)
+            {
+                printf("Failed to pair device!\n");
+            }
+        }
+#endif
+
         if (matterMgr_getNodeIdList(node_id_array, &node_cnt) == MT_STATUS_OK)
         {
             for (size_t i = 0; i < node_cnt; i++)
@@ -121,8 +137,6 @@ int main(int argc, char * argv[])
         }
         else
         {
-            // matterMgr_test();
-
             printMatterNetworkInfo();
         }
     }

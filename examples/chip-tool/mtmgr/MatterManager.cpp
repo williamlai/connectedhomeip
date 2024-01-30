@@ -94,6 +94,21 @@ mt_status_t matterMgr_deInit(void)
     return MT_STATUS_OK;
 }
 
+mt_status_t matterMgr_pairOnNetworkLong(matter_nodeId_t node_id, uint32_t pinCode, uint16_t discoveryFilterCode)
+{
+    mt_status_t res = MT_STATUS_OK;
+    CHIP_ERROR ret;
+
+    MtPairOnNetworkLong pairOnNetworkLong(sMtmgrCore, node_id, pinCode, discoveryFilterCode);
+    ret = pairOnNetworkLong.Run();
+    if (ret != CHIP_NO_ERROR)
+    {
+        res = MT_STATUS_GENERAL_ERROR;
+    }
+
+    return res;
+}
+
 mt_status_t matterMgr_getNetworkInfo(matter_net_t * ret_net_info)
 {
     mt_status_t res = MT_STATUS_OK;

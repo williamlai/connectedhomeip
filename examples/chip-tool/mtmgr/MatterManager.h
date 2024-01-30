@@ -34,6 +34,8 @@ mt_status_t matterMgr_deInit(void);
 
 typedef uint64_t matter_nodeId_t;
 
+mt_status_t matterMgr_pairOnNetworkLong(matter_nodeId_t node_id, uint32_t pinCode, uint16_t discoveryFilterCode);
+
 typedef struct
 {
     /** More Matter network info. Ex. controller node id, fabric count, home fabric index, ... */
