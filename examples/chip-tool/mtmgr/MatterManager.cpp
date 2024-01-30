@@ -54,7 +54,7 @@ void matterMgr_test(void)
     [[maybe_unused]] CHIP_ERROR ret;
     printf("%s(): ++\n", __FUNCTION__);
 
-#if 0
+#if 1
     MtPairOnNetworkLong pairOnNetworkLong(sMtmgrCore, 41, 12345678LLU, 1001);
     ret = pairOnNetworkLong.Run();
     printf("%s(): pairOnNetworkLong ret:%d\n", __FUNCTION__, ret.AsInteger());
@@ -128,7 +128,7 @@ mt_status_t matterMgr_getNodeIdList(matter_nodeId_t * ret_node_id_arry, size_t *
 
         if (nodeIdList.size() > *node_cnt)
         {
-            res = MT_STATUS_OUT_OF_RESOURCES;
+            res = MT_STATUS_GENERAL_ERROR;
         }
         else
         {
@@ -145,7 +145,6 @@ mt_status_t matterMgr_getNodeIdList(matter_nodeId_t * ret_node_id_arry, size_t *
 
 static CHIP_ERROR getDetailedNodeInfo(chip::NodeId nodeId, matter_node_t * ret_node)
 {
-    // chip::EndpointId endPointId         = 0;
     chip::EndpointId endPointIdWildcard = 0xFFFF;
     uint16_t dataModelRevision;
     chip::VendorId vendorId;
@@ -196,6 +195,125 @@ mt_status_t matterMgr_getDetailedNodeInfo(matter_nodeId_t node_id, matter_node_t
         else
         {
             /* nop */
+        }
+    }
+
+    return res;
+}
+
+mt_status_t matterMgr_getEpIdList(matter_nodeId_t node_id, matter_epId_t * ret_ep_id_arry, size_t * ep_cnt)
+{
+    mt_status_t res = MT_STATUS_OK;
+
+    if (ret_ep_id_arry == NULL || ep_cnt == NULL)
+    {
+        res = MT_STATUS_BAD_PARAM;
+    }
+    else
+    {
+        chip::NodeId nodeId                 = static_cast<chip::NodeId>(node_id);
+        chip::EndpointId endPointIdWildcard = 0xFFFF;
+        std::unordered_map<chip::EndpointId, std::vector<chip::ClusterId>> serverList;
+
+        if (ReportDescriptor::GetServerList(sMtmgrCore, nodeId, endPointIdWildcard, serverList) != CHIP_NO_ERROR)
+        {
+            res = MT_STATUS_GENERAL_ERROR;
+        }
+        else
+        {
+            if (*ep_cnt < serverList.size())
+            {
+                res = MT_STATUS_GENERAL_ERROR;
+            }
+            else
+            {
+                size_t i = 0;
+                for (auto it : serverList)
+                {
+                    ret_ep_id_arry[i++] = static_cast<matter_epId_t>(it.first);
+                }
+                *ep_cnt = serverList.size();
+            }
+        }
+    }
+
+    return res;
+}
+
+mt_status_t matterMgr_getDetailedEPInfo(matter_nodeId_t node_id, matter_epId_t ep_id, matter_endpoint_t * ret_ep)
+{
+    mt_status_t res = MT_STATUS_OK;
+
+    if (ret_ep == NULL)
+    {
+        res = MT_STATUS_BAD_PARAM;
+    }
+    else
+    {
+        chip::NodeId nodeId         = static_cast<chip::NodeId>(node_id);
+        chip::EndpointId endPointId = static_cast<chip::EndpointId>(ep_id);
+        std::unordered_map<chip::EndpointId, std::vector<chip::ClusterId>> serverList;
+
+        memset(ret_ep, 0, sizeof(matter_endpoint_t));
+
+        if (ReportDescriptor::GetServerList(sMtmgrCore, nodeId, endPointId, serverList) != CHIP_NO_ERROR)
+        {
+            res = MT_STATUS_GENERAL_ERROR;
+        }
+        else if (serverList.find(endPointId) == serverList.end())
+        {
+            res = MT_STATUS_GENERAL_ERROR;
+        }
+        else
+        {
+            ret_ep->node_id     = node_id;
+            ret_ep->ep_id       = ep_id;
+            ret_ep->cluster_cnt = serverList[endPointId].size();
+        }
+    }
+
+    return res;
+}
+
+mt_status_t matterMgr_getClusterList(matter_nodeId_t node_id, matter_epId_t ep_id, matter_clusterId_t * ret_cluster_array,
+                                     size_t * cluster_cnt)
+{
+    mt_status_t res = MT_STATUS_OK;
+
+    if (ret_cluster_array == NULL || cluster_cnt == NULL)
+    {
+        res = MT_STATUS_BAD_PARAM;
+    }
+    else
+    {
+        chip::NodeId nodeId         = static_cast<chip::NodeId>(node_id);
+        chip::EndpointId endPointId = static_cast<chip::EndpointId>(ep_id);
+        std::unordered_map<chip::EndpointId, std::vector<chip::ClusterId>> serverList;
+
+        if (ReportDescriptor::GetServerList(sMtmgrCore, nodeId, endPointId, serverList) != CHIP_NO_ERROR)
+        {
+            res = MT_STATUS_GENERAL_ERROR;
+        }
+        else if (serverList.find(endPointId) == serverList.end())
+        {
+            res = MT_STATUS_GENERAL_ERROR;
+        }
+        else
+        {
+            auto v = serverList[endPointId];
+
+            if (*cluster_cnt < v.size())
+            {
+                res = MT_STATUS_GENERAL_ERROR;
+            }
+            else
+            {
+                for (size_t i = 0; i < v.size(); i++)
+                {
+                    ret_cluster_array[i] = static_cast<matter_clusterId_t>(v[i]);
+                }
+                *cluster_cnt = v.size();
+            }
         }
     }
 

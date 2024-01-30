@@ -59,6 +59,25 @@ typedef struct
 
 mt_status_t matterMgr_getDetailedNodeInfo(matter_nodeId_t node_id, matter_node_t * ret_node);
 
+typedef uint16_t matter_epId_t;
+
+mt_status_t matterMgr_getEpIdList(matter_nodeId_t node_id, matter_epId_t * ret_ep_id_arry, size_t * ep_cnt);
+
+typedef struct
+{
+    matter_nodeId_t node_id;
+    matter_epId_t ep_id;
+
+    size_t cluster_cnt;
+} matter_endpoint_t;
+
+mt_status_t matterMgr_getDetailedEPInfo(matter_nodeId_t node_id, matter_epId_t ep_id, matter_endpoint_t * ret_ep);
+
+typedef uint32_t matter_clusterId_t;
+
+mt_status_t matterMgr_getClusterList(matter_nodeId_t node_id, matter_epId_t ep_id, matter_clusterId_t * ret_cluster_array,
+                                     size_t * cluster_cnt);
+
 void mtmgr_test();
 
 #ifdef __cplusplus
