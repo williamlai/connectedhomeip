@@ -135,23 +135,24 @@ mt_status_t matterMgr_getNodeIdList(matter_nodeId_t * ret_node_id_arry, size_t *
 
 static CHIP_ERROR getDetailedNodeInfo(chip::NodeId nodeId, matter_node_t * ret_node)
 {
+    chip::EndpointId endPointId         = 0;
     chip::EndpointId endPointIdWildcard = 0xFFFF;
     uint16_t dataModelRevision;
     chip::VendorId vendorId;
     uint16_t productID;
     std::unordered_map<chip::EndpointId, std::vector<chip::ClusterId>> serverList;
 
-    if (ReportBasicInformation::GetDataModelRevision(sMtmgrCore, nodeId, endPointIdWildcard, dataModelRevision) == CHIP_NO_ERROR)
+    if (ReportBasicInformation::GetDataModelRevision(sMtmgrCore, nodeId, endPointId, dataModelRevision) == CHIP_NO_ERROR)
     {
         ret_node->data_model_revision = dataModelRevision;
     }
 
-    if (ReportBasicInformation::GetVendorId(sMtmgrCore, nodeId, endPointIdWildcard, vendorId) == CHIP_NO_ERROR)
+    if (ReportBasicInformation::GetVendorId(sMtmgrCore, nodeId, endPointId, vendorId) == CHIP_NO_ERROR)
     {
         ret_node->vendor_id = static_cast<uint16_t>(vendorId);
     }
 
-    if (ReportBasicInformation::GetProductID(sMtmgrCore, nodeId, endPointIdWildcard, productID) == CHIP_NO_ERROR)
+    if (ReportBasicInformation::GetProductID(sMtmgrCore, nodeId, endPointId, productID) == CHIP_NO_ERROR)
     {
         ret_node->product_id = productID;
     }

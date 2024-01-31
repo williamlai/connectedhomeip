@@ -74,7 +74,7 @@ public:
         {
             chip::VendorId value;
 
-            CHIP_ERROR error = chip::app::DataModel::Decode(*data, mVendorId);
+            CHIP_ERROR error = chip::app::DataModel::Decode(*data, value);
             if (CHIP_NO_ERROR != error)
             {
                 ChipLogError(chipTool, "Response Failure: Can not decode Data");
@@ -112,7 +112,7 @@ public:
         {
             uint16_t value;
 
-            CHIP_ERROR error = chip::app::DataModel::Decode(*data, mProductID);
+            CHIP_ERROR error = chip::app::DataModel::Decode(*data, value);
             if (CHIP_NO_ERROR != error)
             {
                 ChipLogError(chipTool, "Response Failure: Can not decode Data");
