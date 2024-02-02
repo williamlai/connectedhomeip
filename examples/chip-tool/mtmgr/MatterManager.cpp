@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "ClusterCommands.h"
 #include "MatterManagerCore.h"
 #include "MtDiscoverCommissionablesCommand.h"
 #include "MtPairingCommand.h"
@@ -25,6 +26,7 @@
 #include "ReportBasicInformation.h"
 #include "ReportDescriptor.h"
 #include "ReportGeneric.h"
+#include "ReportOnOff.h"
 
 #include <lib/core/CASEAuthTag.h>
 
@@ -385,6 +387,52 @@ mt_status_t matterMgr_getAttributeList(matter_nodeId_t node_id, matter_epId_t ep
             }
             *attribute_cnt = attributeList.size();
         }
+    }
+
+    return res;
+}
+
+mt_status_t matterMgr_getOnOffOnOff(matter_nodeId_t node_id, matter_epId_t ep_id, bool * ret_onoff)
+{
+    mt_status_t res = MT_STATUS_OK;
+
+    if (ret_onoff == NULL)
+    {
+        res = MT_STATUS_BAD_PARAM;
+    }
+    else
+    {
+        chip::NodeId nodeId         = static_cast<chip::NodeId>(node_id);
+        chip::EndpointId endPointId = static_cast<chip::EndpointId>(ep_id);
+        bool onOff;
+
+        if (ReportOnOff::GetOnOff(sMtmgrCore, nodeId, endPointId, onOff) != CHIP_NO_ERROR)
+        {
+            res = MT_STATUS_GENERAL_ERROR;
+        }
+        else
+        {
+            *ret_onoff = onOff;
+        }
+    }
+
+    return res;
+}
+
+mt_status_t matterMgr_sendOnOffToggle(matter_nodeId_t node_id, matter_epId_t ep_id)
+{
+    mt_status_t res = MT_STATUS_OK;
+
+    chip::NodeId nodeId         = static_cast<chip::NodeId>(node_id);
+    chip::EndpointId endPointId = static_cast<chip::EndpointId>(ep_id);
+
+    if (ClusterCommands::SendOnOffToggle(sMtmgrCore, nodeId, endPointId) != CHIP_NO_ERROR)
+    {
+        res = MT_STATUS_GENERAL_ERROR;
+    }
+    else
+    {
+        /* nop */
     }
 
     return res;

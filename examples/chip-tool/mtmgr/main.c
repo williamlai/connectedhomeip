@@ -13,6 +13,7 @@
  */
 
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -25,6 +26,34 @@
 #define MAX_ATTRIBUTE_ID_ARRAY_SIZE 1024
 
 #define SETUP_DEMO_DEVICE (1)
+
+static void printClusterOnOff(matter_nodeId_t node_id, matter_epId_t endpoint_id)
+{
+    bool onOff = false;
+
+    if (matterMgr_getOnOffOnOff(41, 1, &onOff) == MT_STATUS_OK)
+    {
+        printf("Node ID: %" PRIu64 ", Endpoint ID: %d, Cluster OnOff\n", node_id, endpoint_id);
+        printf("    OnOff: %s\n", (onOff) ? "TRUE" : "FALSE");
+    }
+}
+
+[[maybe_unused]] static void runToggleTest(matter_nodeId_t node_id, matter_epId_t endpoint_id)
+{
+    printClusterOnOff(node_id, endpoint_id);
+
+    printf("Sending OnOff Toggle command to Node ID: %" PRIu64 ", EndPoint ID: %d...\n", node_id, endpoint_id);
+    if (matterMgr_sendOnOffToggle(node_id, endpoint_id) != MT_STATUS_OK)
+    {
+        printf("Failed to send OnOff Toggle command!\n");
+    }
+    else
+    {
+        printf("Successfully sent OnOff Toggle command\n");
+    }
+
+    printClusterOnOff(node_id, endpoint_id);
+}
 
 static void printClusterInfo(matter_nodeId_t node_id, matter_epId_t endpoint_id, matter_clusterId_t cluster_id)
 {
@@ -167,6 +196,12 @@ int main(int argc, char * argv[])
         else
         {
             printMatterNetworkInfo();
+
+#if SETUP_DEMO_DEVICE
+            matter_nodeId_t node_id   = 41;
+            matter_epId_t endpoint_id = 1;
+            runToggleTest(node_id, endpoint_id);
+#endif
         }
     }
 

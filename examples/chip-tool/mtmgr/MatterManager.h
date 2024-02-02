@@ -99,6 +99,10 @@ mt_status_t matterMgr_getDetailedClusterInfo(matter_nodeId_t node_id, matter_epI
 mt_status_t matterMgr_getAttributeList(matter_nodeId_t node_id, matter_epId_t ep_id, matter_clusterId_t cluster_id,
                                        matter_attributeId_t * ret_attribute_array, size_t * attribute_cnt);
 
+mt_status_t matterMgr_getOnOffOnOff(matter_nodeId_t node_id, matter_epId_t ep_id, bool * ret_onoff);
+
+mt_status_t matterMgr_sendOnOffToggle(matter_nodeId_t node_id, matter_epId_t ep_id);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

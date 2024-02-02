@@ -123,7 +123,8 @@
         "execution": "cpp",
         "forward_list": "cpp",
         "list": "cpp",
-        "unordered_set": "cpp"
+        "unordered_set": "cpp",
+        "span": "cpp"
     },
     // Configure paths or glob patterns to exclude from file watching.
     "files.watcherExclude": {
