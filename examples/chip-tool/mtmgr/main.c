@@ -26,6 +26,11 @@
 #define MAX_ATTRIBUTE_ID_ARRAY_SIZE 1024
 
 #define SETUP_DEMO_DEVICE (1)
+#if SETUP_DEMO_DEVICE
+#define DEVICE_NODE_ID (41)
+#define DEVICE_PIN_CODE (12345678)
+#define DEVICE_DISCOVERY_FILTER_CODE (1001)
+#endif
 
 static void printClusterOnOff(matter_nodeId_t node_id, matter_epId_t endpoint_id)
 {
@@ -38,7 +43,7 @@ static void printClusterOnOff(matter_nodeId_t node_id, matter_epId_t endpoint_id
     }
 }
 
-[[maybe_unused]] static void runToggleTest(matter_nodeId_t node_id, matter_epId_t endpoint_id)
+static void runToggleTest(matter_nodeId_t node_id, matter_epId_t endpoint_id)
 {
     printClusterOnOff(node_id, endpoint_id);
 
@@ -139,7 +144,7 @@ static void printNodeInfo(matter_nodeId_t node_id)
     }
 }
 
-[[maybe_unused]] static void printMatterNetworkInfo()
+static void printMatterNetworkInfo()
 {
     matter_net_t mtnet;
     size_t node_cnt = MAX_NODE_ID_ARRAY_SIZE;
@@ -153,9 +158,9 @@ static void printNodeInfo(matter_nodeId_t node_id)
         if (mtnet.node_cnt == 0)
         {
             printf("Try to pair device...\n");
-            matter_nodeId_t node_id      = 41;
-            uint32_t pinCode             = 12345678;
-            uint16_t discoveryFilterCode = 1001;
+            matter_nodeId_t node_id      = DEVICE_NODE_ID;
+            uint32_t pinCode             = DEVICE_PIN_CODE;
+            uint16_t discoveryFilterCode = DEVICE_DISCOVERY_FILTER_CODE;
             if (matterMgr_pairOnNetworkLong(node_id, pinCode, discoveryFilterCode) != MT_STATUS_OK)
             {
                 printf("Failed to pair device!\n");
@@ -198,7 +203,7 @@ int main(int argc, char * argv[])
             printMatterNetworkInfo();
 
 #if SETUP_DEMO_DEVICE
-            matter_nodeId_t node_id   = 41;
+            matter_nodeId_t node_id   = DEVICE_NODE_ID;
             matter_epId_t endpoint_id = 1;
             runToggleTest(node_id, endpoint_id);
 #endif
