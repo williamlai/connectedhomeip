@@ -8,10 +8,15 @@ The following are the primary branches of this repository.
 
 -   mainline: It's forked from
     [connectedhomeip](https://github.com/project-chip/connectedhomeip) with
-    version v1.2.0.1. And we'll put main features on this repository
+    version v1.2.0.1. And we'll put main features on this branch.
 -   connectedhomeip-mainline: This branch is forked from
     [connectedhomeip](https://github.com/project-chip/connectedhomeip), and we
     are supposed not to change this branch except to pull the latest changes.
+-   poc-demo: This branch holds the PoC demo code that shows How to use the CHIP
+    core library to manage the Matter network like the CHIP tool. It exposes
+    APIs that are designed to be invoked by CDMB. For more details, please refer
+    to section [PoC Demo](#poc-demo) and doc
+    [Matter-demo](https://quip-amazon.com/t3bqAilWwwca/Matter-demo)
 -   ws-based: This branch contains the old design and has been abandoned.
 
 # How to build
@@ -52,7 +57,7 @@ source scripts/activate.sh
 
 This repository uses GN as its build framework. Use the following command to
 generate the build configuration. This command indicates the project/example
-root is `examples/chip-too`, and the artifacts will be put in `out/chip-tool`.
+root is `examples/chip-tool`, and the artifacts will be put in `out/chip-tool`.
 
 ```
 gn gen --root=examples/chip-tool out/chip-tool
@@ -75,6 +80,20 @@ Use the following command to build lighting-app.
 gn gen --root=examples/lighting-app out/lighting-app
 ninja -C out/lighting-app
 ```
+
+# PoC Demo
+
+The code for the PoC Demo and CHIP-tool has been consolidated, and they now
+share the same compile configuration. The source code is located under
+`examples/chip-tool/mtmgr/`. Additionally, modifications have been made to the
+file `examples/chip-tool/BUILD.gn`, where the `mtmgr` library and `mtmgr-app`
+executable binary have been added.
+
+When you build chip-tool example, it'll also build the `mtmgr` library and
+`mtmgr-app` executable in the same out folder of chip-tool.
+
+About how to run the demo, please refer to doc
+[Matter-demo](https://quip-amazon.com/t3bqAilWwwca/Matter-demo).
 
 # Fork changes
 
