@@ -36,7 +36,7 @@ static void printClusterOnOff(matter_nodeId_t node_id, matter_epId_t endpoint_id
 {
     bool onOff = false;
 
-    if (matterMgr_getOnOffOnOff(41, 1, &onOff) == MT_STATUS_OK)
+    if (matterMgr_getOnOffOnOff(node_id, endpoint_id, &onOff) == MT_STATUS_OK)
     {
         printf("Node ID: %" PRIu64 ", Endpoint ID: %d, Cluster OnOff\n", node_id, endpoint_id);
         printf("    OnOff: %s\n", (onOff) ? "TRUE" : "FALSE");

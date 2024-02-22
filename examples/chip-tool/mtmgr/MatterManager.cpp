@@ -14,6 +14,7 @@
 
 #include "MatterManager.h"
 
+#include <cstdint>
 #include <vector>
 
 #include "ClusterCommands.h"
@@ -37,19 +38,7 @@
 
 #include <lib/dnssd/Discovery_ImplPlatform.h>
 
-#ifdef __cplusplus
 extern "C" {
-#endif
-
-#include <stdint.h>
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 ExampleCredentialIssuerCommands credIssuerCommands;
 MatterManagerCore sMtmgrCore(&credIssuerCommands);
@@ -438,6 +427,4 @@ mt_status_t matterMgr_sendOnOffToggle(matter_nodeId_t node_id, matter_epId_t ep_
     return res;
 }
 
-#ifdef __cplusplus
 } /* extern "C" */
-#endif
