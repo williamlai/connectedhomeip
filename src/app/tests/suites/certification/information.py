@@ -93,7 +93,7 @@ def parseTestPlan(filepath):
 
 def parseYaml(filepath):
     with open(filepath) as file:
-        return yaml.load(file, Loader=yaml.FullLoader)
+        return yaml.safe_load(file)
 
 
 def getPathFor(filename):

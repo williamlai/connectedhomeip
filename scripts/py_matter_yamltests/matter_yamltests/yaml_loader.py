@@ -46,7 +46,7 @@ class YamlLoader:
             with open(yaml_file) as f:
                 loader = SafeLoader
                 add_yaml_support_for_scientific_notation_without_dot(loader)
-                content = yaml.load(f, Loader=loader)
+                content = yaml.safe_load(f, Loader=loader)
 
                 self.__check_content(content)
 

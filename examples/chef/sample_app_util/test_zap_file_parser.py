@@ -39,7 +39,7 @@ class TestZapFileParser(unittest.TestCase):
         """Tests generate_metadata."""
         generated_metadata = zap_file_parser.generate_metadata(_TEST_FILE)
         with open(_TEST_METADATA) as f:
-            expected_metadata = yaml.load(f.read(), Loader=yaml.FullLoader)
+            expected_metadata = yaml.safe_load(f.read())
         self.assertEqual(
             generated_metadata, expected_metadata, "Metadata not generated correctly.")
 
@@ -51,10 +51,9 @@ class TestZapFileParser(unittest.TestCase):
             shutil.copy(_TEST_FILE, zap_file)
             zap_file_parser.generate_metadata_file(zap_file)
             with open(meta_file) as f:
-                generated_metadata = yaml.load(
-                    f.read(), Loader=yaml.FullLoader)
+                generated_metadata = yaml.safe_load(f.read())
             with open(_TEST_METADATA) as f:
-                expected_metadata = yaml.load(f.read(), Loader=yaml.FullLoader)
+                expected_metadata = yaml.safe_load(f.read())
             self.assertEqual(
                 generated_metadata, expected_metadata, "Metadata file not generated correctly.")
 
