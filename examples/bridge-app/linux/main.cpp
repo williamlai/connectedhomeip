@@ -66,8 +66,7 @@ const int kDescriptorAttributeArraySize = 254;
 
 EndpointId gCurrentEndpointId;
 EndpointId gFirstDynamicEndpointId;
-// Power source is on the same endpoint as the composed device
-Device * gDevices[CHIP_DEVICE_CONFIG_DYNAMIC_ENDPOINT_COUNT + 1];
+Device * gDevices[CHIP_DEVICE_CONFIG_DYNAMIC_ENDPOINT_COUNT];
 std::vector<Room *> gRooms;
 std::vector<Action *> gActions;
 
@@ -156,9 +155,6 @@ DeviceOnOff Light2("Light 2", "Office");
 DeviceTempSensor TempSensor1("TempSensor 1", "Office", minMeasuredValue, maxMeasuredValue, initialMeasuredValue);
 DeviceTempSensor TempSensor2("TempSensor 2", "Office", minMeasuredValue, maxMeasuredValue, initialMeasuredValue);
 
-DeviceTempSensor ComposedTempSensor1("Composed TempSensor 1", "Bedroom", minMeasuredValue, maxMeasuredValue, initialMeasuredValue);
-DeviceTempSensor ComposedTempSensor2("Composed TempSensor 2", "Bedroom", minMeasuredValue, maxMeasuredValue, initialMeasuredValue);
-
 DECLARE_DYNAMIC_ATTRIBUTE_LIST_BEGIN(tempSensorAttrs)
 DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::MeasuredValue::Id, INT16S, 2, 0),        /* Measured Value */
     DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::MinMeasuredValue::Id, INT16S, 2, 0), /* Min Measured Value */
@@ -182,34 +178,6 @@ DECLARE_DYNAMIC_CLUSTER(TemperatureMeasurement::Id, tempSensorAttrs, nullptr, nu
 DECLARE_DYNAMIC_ENDPOINT(bridgedTempSensorEndpoint, bridgedTempSensorClusters);
 DataVersion gTempSensor1DataVersions[ArraySize(bridgedTempSensorClusters)];
 DataVersion gTempSensor2DataVersions[ArraySize(bridgedTempSensorClusters)];
-
-// ---------------------------------------------------------------------------
-//
-// COMPOSED DEVICE ENDPOINT: contains the following clusters:
-//   - Descriptor
-//   - Bridged Device Basic Information
-//   - Power source
-
-// Composed Device Configuration
-DECLARE_DYNAMIC_ATTRIBUTE_LIST_BEGIN(powerSourceAttrs)
-DECLARE_DYNAMIC_ATTRIBUTE(PowerSource::Attributes::BatChargeLevel::Id, ENUM8, 1, 0),
-    DECLARE_DYNAMIC_ATTRIBUTE(PowerSource::Attributes::BatReplacementNeeded::Id, BOOLEAN, 1, 0),
-    DECLARE_DYNAMIC_ATTRIBUTE(PowerSource::Attributes::BatReplaceability::Id, ENUM8, 1, 0),
-    DECLARE_DYNAMIC_ATTRIBUTE(PowerSource::Attributes::Order::Id, INT8U, 1, 0),
-    DECLARE_DYNAMIC_ATTRIBUTE(PowerSource::Attributes::Status::Id, ENUM8, 1, 0),
-    DECLARE_DYNAMIC_ATTRIBUTE(PowerSource::Attributes::Description::Id, CHAR_STRING, 32, 0),
-    DECLARE_DYNAMIC_ATTRIBUTE(PowerSource::Attributes::EndpointList::Id, ARRAY, 0, 0),
-    DECLARE_DYNAMIC_ATTRIBUTE(PowerSource::Attributes::FeatureMap::Id, BITMAP32, 4, 0), DECLARE_DYNAMIC_ATTRIBUTE_LIST_END();
-
-DECLARE_DYNAMIC_CLUSTER_LIST_BEGIN(bridgedComposedDeviceClusters)
-DECLARE_DYNAMIC_CLUSTER(Descriptor::Id, descriptorAttrs, nullptr, nullptr),
-    DECLARE_DYNAMIC_CLUSTER(BridgedDeviceBasicInformation::Id, bridgedDeviceBasicAttrs, nullptr, nullptr),
-    DECLARE_DYNAMIC_CLUSTER(PowerSource::Id, powerSourceAttrs, nullptr, nullptr), DECLARE_DYNAMIC_CLUSTER_LIST_END;
-
-DECLARE_DYNAMIC_ENDPOINT(bridgedComposedDeviceEndpoint, bridgedComposedDeviceClusters);
-DataVersion gComposedDeviceDataVersions[ArraySize(bridgedComposedDeviceClusters)];
-DataVersion gComposedTempSensor1DataVersions[ArraySize(bridgedTempSensorClusters)];
-DataVersion gComposedTempSensor2DataVersions[ArraySize(bridgedTempSensorClusters)];
 
 } // namespace
 
@@ -619,11 +587,6 @@ bool emberAfActionsClusterInstantActionCallback(app::CommandHandler * commandObj
 const EmberAfDeviceType gBridgedOnOffDeviceTypes[] = { { DEVICE_TYPE_LO_ON_OFF_LIGHT, DEVICE_VERSION_DEFAULT },
                                                        { DEVICE_TYPE_BRIDGED_NODE, DEVICE_VERSION_DEFAULT } };
 
-const EmberAfDeviceType gBridgedComposedDeviceTypes[] = { { DEVICE_TYPE_BRIDGED_NODE, DEVICE_VERSION_DEFAULT },
-                                                          { DEVICE_TYPE_POWER_SOURCE, DEVICE_VERSION_DEFAULT } };
-
-const EmberAfDeviceType gComposedTempSensorDeviceTypes[] = { { DEVICE_TYPE_TEMP_SENSOR, DEVICE_VERSION_DEFAULT } };
-
 const EmberAfDeviceType gBridgedTempSensorDeviceTypes[] = { { DEVICE_TYPE_TEMP_SENSOR, DEVICE_VERSION_DEFAULT },
                                                             { DEVICE_TYPE_BRIDGED_NODE, DEVICE_VERSION_DEFAULT } };
 
@@ -645,20 +608,6 @@ void ApplicationInit()
     TempSensor1.SetChangeCallback(&HandleDeviceTempSensorStatusChanged);
     TempSensor2.SetChangeCallback(&HandleDeviceTempSensorStatusChanged);
 
-    // Setup composed device with two temperature sensors and a power source
-    ComposedDevice ComposedDevice("Composed Device", "Bedroom");
-    DevicePowerSource ComposedPowerSource("Composed Power Source", "Bedroom", PowerSource::Feature::kBattery);
-
-    ComposedDevice.SetReachable(true);
-    ComposedTempSensor1.SetReachable(true);
-    ComposedTempSensor2.SetReachable(true);
-    ComposedPowerSource.SetReachable(true);
-    ComposedPowerSource.SetBatChargeLevel(58);
-
-    ComposedTempSensor1.SetChangeCallback(&HandleDeviceTempSensorStatusChanged);
-    ComposedTempSensor2.SetChangeCallback(&HandleDeviceTempSensorStatusChanged);
-    ComposedPowerSource.SetChangeCallback(&HandleDevicePowerSourceStatusChanged);
-
     // Set starting endpoint id where dynamic endpoints will be assigned, which
     // will be the next consecutive endpoint id after the last fixed endpoint.
     gFirstDynamicEndpointId = static_cast<chip::EndpointId>(
@@ -678,26 +627,6 @@ void ApplicationInit()
                       Span<DataVersion>(gTempSensor1DataVersions), 1);
     AddDeviceEndpoint(&TempSensor2, &bridgedTempSensorEndpoint, Span<const EmberAfDeviceType>(gBridgedTempSensorDeviceTypes),
                       Span<DataVersion>(gTempSensor2DataVersions), 1);
-
-    // Add composed Device with two temperature sensors and a power source
-    AddDeviceEndpoint(&ComposedDevice, &bridgedComposedDeviceEndpoint, Span<const EmberAfDeviceType>(gBridgedComposedDeviceTypes),
-                      Span<DataVersion>(gComposedDeviceDataVersions), 1);
-    AddDeviceEndpoint(&ComposedTempSensor1, &bridgedTempSensorEndpoint,
-                      Span<const EmberAfDeviceType>(gComposedTempSensorDeviceTypes),
-                      Span<DataVersion>(gComposedTempSensor1DataVersions), ComposedDevice.GetEndpointId());
-    AddDeviceEndpoint(&ComposedTempSensor2, &bridgedTempSensorEndpoint,
-                      Span<const EmberAfDeviceType>(gComposedTempSensorDeviceTypes),
-                      Span<DataVersion>(gComposedTempSensor2DataVersions), ComposedDevice.GetEndpointId());
-
-    // Because the power source is on the same endpoint as the composed device, it needs to be explicitly added
-    gDevices[CHIP_DEVICE_CONFIG_DYNAMIC_ENDPOINT_COUNT] = &ComposedPowerSource;
-    // This provides power for the composed endpoint
-    std::vector<chip::EndpointId> endpointList;
-    endpointList.push_back(ComposedDevice.GetEndpointId());
-    endpointList.push_back(ComposedTempSensor1.GetEndpointId());
-    endpointList.push_back(ComposedTempSensor2.GetEndpointId());
-    ComposedPowerSource.SetEndpointList(endpointList);
-    ComposedPowerSource.SetEndpointId(ComposedDevice.GetEndpointId());
 
     registerAttributeAccessOverride(&gPowerAttrAccess);
 }
