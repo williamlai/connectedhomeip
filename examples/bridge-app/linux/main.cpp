@@ -149,7 +149,6 @@ DECLARE_DYNAMIC_CLUSTER(OnOff::Id, onOffAttrs, onOffIncomingCommands, nullptr),
 // Declare Bridged Light endpoint
 DECLARE_DYNAMIC_ENDPOINT(bridgedLightEndpoint, bridgedLightClusters);
 DataVersion gLight1DataVersions[ArraySize(bridgedLightClusters)];
-DataVersion gLight2DataVersions[ArraySize(bridgedLightClusters)];
 
 DeviceOnOff Light1("Light 1", "Office");
 DeviceOnOff Light2("Light 2", "Office");
@@ -750,143 +749,6 @@ const EmberAfDeviceType gComposedTempSensorDeviceTypes[] = { { DEVICE_TYPE_TEMP_
 const EmberAfDeviceType gBridgedTempSensorDeviceTypes[] = { { DEVICE_TYPE_TEMP_SENSOR, DEVICE_VERSION_DEFAULT },
                                                             { DEVICE_TYPE_BRIDGED_NODE, DEVICE_VERSION_DEFAULT } };
 
-#define POLL_INTERVAL_MS (100)
-uint8_t poll_prescale = 0;
-
-bool kbhit()
-{
-    int byteswaiting;
-    ioctl(0, FIONREAD, &byteswaiting);
-    return byteswaiting > 0;
-}
-
-const int16_t oneDegree = 100;
-
-void * bridge_polling_thread(void * context)
-{
-    bool light1_added = true;
-    bool light2_added = false;
-    while (true)
-    {
-        if (kbhit())
-        {
-            int ch = getchar();
-
-            // Commands used for the actions bridge test plan.
-            if (ch == '2' && light2_added == false)
-            {
-                // TC-BR-2 step 2, Add Light2
-                AddDeviceEndpoint(&Light2, &bridgedLightEndpoint, Span<const EmberAfDeviceType>(gBridgedOnOffDeviceTypes),
-                                  Span<DataVersion>(gLight2DataVersions), 1);
-                light2_added = true;
-            }
-            else if (ch == '4' && light1_added == true)
-            {
-                // TC-BR-2 step 4, Remove Light 1
-                RemoveDeviceEndpoint(&Light1);
-                light1_added = false;
-            }
-            if (ch == '5' && light1_added == false)
-            {
-                // TC-BR-2 step 5, Add Light 1 back
-                AddDeviceEndpoint(&Light1, &bridgedLightEndpoint, Span<const EmberAfDeviceType>(gBridgedOnOffDeviceTypes),
-                                  Span<DataVersion>(gLight1DataVersions), 1);
-                light1_added = true;
-            }
-            if (ch == 'b')
-            {
-                // TC-BR-3 step 1b, rename lights
-                if (light1_added)
-                {
-                    Light1.SetName("Light 1b");
-                }
-                if (light2_added)
-                {
-                    Light2.SetName("Light 2b");
-                }
-            }
-            if (ch == 'c')
-            {
-                // TC-BR-3 step 2c, change the state of the lights
-                if (light1_added)
-                {
-                    Light1.Toggle();
-                }
-                if (light2_added)
-                {
-                    Light2.Toggle();
-                }
-            }
-            if (ch == 't')
-            {
-                // TC-BR-4 step 1g, change the state of the temperature sensors
-                TempSensor1.SetMeasuredValue(static_cast<int16_t>(TempSensor1.GetMeasuredValue() + oneDegree));
-                TempSensor2.SetMeasuredValue(static_cast<int16_t>(TempSensor2.GetMeasuredValue() + oneDegree));
-                ComposedTempSensor1.SetMeasuredValue(static_cast<int16_t>(ComposedTempSensor1.GetMeasuredValue() + oneDegree));
-                ComposedTempSensor2.SetMeasuredValue(static_cast<int16_t>(ComposedTempSensor2.GetMeasuredValue() + oneDegree));
-            }
-
-            // Commands used for the actions cluster test plan.
-            if (ch == 'r')
-            {
-                // TC-ACT-2.2 step 2c, rename "Room 1"
-                room1.setName("Room 1 renamed");
-                ActionLight1.SetLocation(room1.getName());
-                ActionLight2.SetLocation(room1.getName());
-            }
-            if (ch == 'f')
-            {
-                // TC-ACT-2.2 step 2f, move "Action Light 3" from "Room 2" to "Room 1"
-                ActionLight3.SetLocation(room1.getName());
-            }
-            if (ch == 'i')
-            {
-                // TC-ACT-2.2 step 2i, remove "Room 2" (make it not visible in the endpoint list), do not remove the lights
-                room2.setIsVisible(false);
-            }
-            if (ch == 'l')
-            {
-                // TC-ACT-2.2 step 2l, add a new "Zone 3" and add "Action Light 2" to the new zone
-                room3.setIsVisible(true);
-                ActionLight2.SetZone("Zone 3");
-            }
-            if (ch == 'm')
-            {
-                // TC-ACT-2.2 step 3c, rename "Turn on Room 1 lights"
-                action1.setName("Turn On Room 1");
-            }
-            if (ch == 'n')
-            {
-                // TC-ACT-2.2 step 3f, remove "Turn on Room 2 lights"
-                action2.setIsVisible(false);
-            }
-            if (ch == 'o')
-            {
-                // TC-ACT-2.2 step 3i, add "Turn off Room 1 renamed lights"
-                action3.setIsVisible(true);
-            }
-
-            // Commands used for the Bridged Device Basic Information test plan
-            if (ch == 'u')
-            {
-                // TC-BRBINFO-2.2 step 2 "Set reachable to false"
-                TempSensor1.SetReachable(false);
-            }
-            if (ch == 'v')
-            {
-                // TC-BRBINFO-2.2 step 2 "Set reachable to true"
-                TempSensor1.SetReachable(true);
-            }
-            continue;
-        }
-
-        // Sleep to avoid tight loop reading commands
-        usleep(POLL_INTERVAL_MS * 1000);
-    }
-
-    return nullptr;
-}
-
 void ApplicationInit()
 {
     // Clear out the device database
@@ -987,16 +849,6 @@ void ApplicationInit()
     gActions.push_back(&action1);
     gActions.push_back(&action2);
     gActions.push_back(&action3);
-
-    {
-        pthread_t poll_thread;
-        int res = pthread_create(&poll_thread, nullptr, bridge_polling_thread, nullptr);
-        if (res)
-        {
-            printf("Error creating polling thread: %d\n", res);
-            exit(1);
-        }
-    }
 
     registerAttributeAccessOverride(&gPowerAttrAccess);
 }

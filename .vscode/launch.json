@@ -11,6 +11,14 @@
             "pid": "${command:pickProcess}"
         },
         {
+            "name": "Run chip-bridge-app",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/bridge-app/chip-bridge-app",
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Run application (Darwin x64)",
             "type": "lldb",
             "request": "launch",
