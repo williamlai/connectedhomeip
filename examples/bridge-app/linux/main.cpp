@@ -159,20 +159,6 @@ DeviceTempSensor TempSensor2("TempSensor 2", "Office", minMeasuredValue, maxMeas
 DeviceTempSensor ComposedTempSensor1("Composed TempSensor 1", "Bedroom", minMeasuredValue, maxMeasuredValue, initialMeasuredValue);
 DeviceTempSensor ComposedTempSensor2("Composed TempSensor 2", "Bedroom", minMeasuredValue, maxMeasuredValue, initialMeasuredValue);
 
-// Declare Bridged endpoints used for Action clusters
-DataVersion gActionLight1DataVersions[ArraySize(bridgedLightClusters)];
-DataVersion gActionLight2DataVersions[ArraySize(bridgedLightClusters)];
-
-DeviceOnOff ActionLight1("Action Light 1", "Room 1");
-DeviceOnOff ActionLight2("Action Light 2", "Room 1");
-
-Room room1("Room 1", 0xE001, Actions::EndpointListTypeEnum::kRoom, true);
-
-Action action1(0x1001, "Turn On Room 1", Actions::ActionTypeEnum::kAutomation, 0xE001, 0x1, Actions::ActionStateEnum::kInactive,
-               true);
-Action action2(0x1002, "Turn Off Room 1", Actions::ActionTypeEnum::kAutomation, 0xE002, 0x1, Actions::ActionStateEnum::kInactive,
-               false);
-
 DECLARE_DYNAMIC_ATTRIBUTE_LIST_BEGIN(tempSensorAttrs)
 DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::MeasuredValue::Id, INT16S, 2, 0),        /* Measured Value */
     DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::MinMeasuredValue::Id, INT16S, 2, 0), /* Min Measured Value */
@@ -307,39 +293,6 @@ int RemoveDeviceEndpoint(Device * dev)
 std::vector<EndpointListInfo> GetEndpointListInfo(chip::EndpointId parentId)
 {
     std::vector<EndpointListInfo> infoList;
-
-    for (auto room : gRooms)
-    {
-        if (room->getIsVisible())
-        {
-            EndpointListInfo info(room->getEndpointListId(), room->getName(), room->getType());
-            int index = 0;
-            while (index < CHIP_DEVICE_CONFIG_DYNAMIC_ENDPOINT_COUNT)
-            {
-                if ((gDevices[index] != nullptr) && (gDevices[index]->GetParentEndpointId() == parentId))
-                {
-                    std::string location;
-                    if (room->getType() == Actions::EndpointListTypeEnum::kZone)
-                    {
-                        location = gDevices[index]->GetZone();
-                    }
-                    else
-                    {
-                        location = gDevices[index]->GetLocation();
-                    }
-                    if (room->getName().compare(location) == 0)
-                    {
-                        info.AddEndpointId(gDevices[index]->GetEndpointId());
-                    }
-                }
-                index++;
-            }
-            if (info.GetEndpointListSize() > 0)
-            {
-                infoList.push_back(info);
-            }
-        }
-    }
 
     return infoList;
 }
@@ -656,62 +609,9 @@ EmberAfStatus emberAfExternalAttributeWriteCallback(EndpointId endpoint, Cluster
     return ret;
 }
 
-void runOnOffRoomAction(Room * room, bool actionOn, EndpointId endpointId, uint16_t actionID, uint32_t invokeID, bool hasInvokeID)
-{
-    if (hasInvokeID)
-    {
-        Actions::Events::StateChanged::Type event{ actionID, invokeID, Actions::ActionStateEnum::kActive };
-        EventNumber eventNumber;
-        chip::app::LogEvent(event, endpointId, eventNumber);
-    }
-
-    // Check and run the action for ActionLight1 - ActionLight4
-    if (room->getName().compare(ActionLight1.GetLocation()) == 0)
-    {
-        ActionLight1.SetOnOff(actionOn);
-    }
-    if (room->getName().compare(ActionLight2.GetLocation()) == 0)
-    {
-        ActionLight2.SetOnOff(actionOn);
-    }
-
-    if (hasInvokeID)
-    {
-        Actions::Events::StateChanged::Type event{ actionID, invokeID, Actions::ActionStateEnum::kInactive };
-        EventNumber eventNumber;
-        chip::app::LogEvent(event, endpointId, eventNumber);
-    }
-}
-
 bool emberAfActionsClusterInstantActionCallback(app::CommandHandler * commandObj, const app::ConcreteCommandPath & commandPath,
                                                 const Actions::Commands::InstantAction::DecodableType & commandData)
 {
-    bool hasInvokeID      = false;
-    uint32_t invokeID     = 0;
-    EndpointId endpointID = commandPath.mEndpointId;
-    auto & actionID       = commandData.actionID;
-
-    if (commandData.invokeID.HasValue())
-    {
-        hasInvokeID = true;
-        invokeID    = commandData.invokeID.Value();
-    }
-
-    if (actionID == action1.getActionId() && action1.getIsVisible())
-    {
-        // Turn On Lights in Room 1
-        runOnOffRoomAction(&room1, true, endpointID, actionID, invokeID, hasInvokeID);
-        commandObj->AddStatus(commandPath, Protocols::InteractionModel::Status::Success);
-        return true;
-    }
-    if (actionID == action2.getActionId() && action2.getIsVisible())
-    {
-        // Turn Off Lights in Room 1
-        runOnOffRoomAction(&room1, false, endpointID, actionID, invokeID, hasInvokeID);
-        commandObj->AddStatus(commandPath, Protocols::InteractionModel::Status::Success);
-        return true;
-    }
-
     commandObj->AddStatus(commandPath, Protocols::InteractionModel::Status::NotFound);
     return true;
 }
@@ -744,13 +644,6 @@ void ApplicationInit()
 
     TempSensor1.SetChangeCallback(&HandleDeviceTempSensorStatusChanged);
     TempSensor2.SetChangeCallback(&HandleDeviceTempSensorStatusChanged);
-
-    // Setup devices for action cluster tests
-    ActionLight1.SetReachable(true);
-    ActionLight2.SetReachable(true);
-
-    ActionLight1.SetChangeCallback(&HandleDeviceOnOffStatusChanged);
-    ActionLight2.SetChangeCallback(&HandleDeviceOnOffStatusChanged);
 
     // Setup composed device with two temperature sensors and a power source
     ComposedDevice ComposedDevice("Composed Device", "Bedroom");
@@ -796,12 +689,6 @@ void ApplicationInit()
                       Span<const EmberAfDeviceType>(gComposedTempSensorDeviceTypes),
                       Span<DataVersion>(gComposedTempSensor2DataVersions), ComposedDevice.GetEndpointId());
 
-    // Add 4 lights for the Action Clusters tests
-    AddDeviceEndpoint(&ActionLight1, &bridgedLightEndpoint, Span<const EmberAfDeviceType>(gBridgedOnOffDeviceTypes),
-                      Span<DataVersion>(gActionLight1DataVersions), 1);
-    AddDeviceEndpoint(&ActionLight2, &bridgedLightEndpoint, Span<const EmberAfDeviceType>(gBridgedOnOffDeviceTypes),
-                      Span<DataVersion>(gActionLight2DataVersions), 1);
-
     // Because the power source is on the same endpoint as the composed device, it needs to be explicitly added
     gDevices[CHIP_DEVICE_CONFIG_DYNAMIC_ENDPOINT_COUNT] = &ComposedPowerSource;
     // This provides power for the composed endpoint
@@ -811,11 +698,6 @@ void ApplicationInit()
     endpointList.push_back(ComposedTempSensor2.GetEndpointId());
     ComposedPowerSource.SetEndpointList(endpointList);
     ComposedPowerSource.SetEndpointId(ComposedDevice.GetEndpointId());
-
-    gRooms.push_back(&room1);
-
-    gActions.push_back(&action1);
-    gActions.push_back(&action2);
 
     registerAttributeAccessOverride(&gPowerAttrAccess);
 }
