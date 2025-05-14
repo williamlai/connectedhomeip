@@ -26,7 +26,7 @@
 #include <string>
 
 constexpr uint16_t kDefaultWebSocketServerPort                 = 9002;
-constexpr uint16_t kMaxMessageBufferLen                        = 8192;
+constexpr uint16_t kMaxMessageBufferLen                        = 65535;
 [[maybe_unused]] constexpr char kWebSocketServerReadyMessage[] = "== WebSocket Server Ready";
 
 namespace {

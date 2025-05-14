@@ -67,61 +67,24 @@ struct InteractiveServerResultLog
 
 struct InteractiveServerResult
 {
-    bool mEnabled       = false;
-    bool mIsAsyncReport = false;
-    uint16_t mTimeout   = 0;
+    bool mIsAsyncReport = true;
     int mStatus         = EXIT_SUCCESS;
     std::vector<std::string> mResults;
     std::vector<InteractiveServerResultLog> mLogs;
 
-    // The InteractiveServerResult instance (gInteractiveServerResult) is initially
-    // accessed on the main thread in InteractiveServerCommand::RunCommand, which is
-    // when chip-tool starts in 'interactive server' mode.
-    //
-    // Then command results are normally sent over the wire onto the main thread too
-    // when a command is received over WebSocket in InteractiveServerCommand::OnWebSocketMessageReceived
-    // which for most cases runs a command onto the chip thread and block until
-    // it is resolved (or until it timeouts).
-    //
-    // But in the meantime, when some parts of the command result happens, it is appended
-    // to the mResults vector onto the chip thread.
-    //
-    // For empty commands, which means that the test suite is *waiting* for some events
-    // (e.g a subscription report), the command results are sent over the chip thread
-    // (this is the isAsyncReport use case).
-    //
-    // Finally, logs can be appended from either the chip thread or the main thread.
-    //
-    // This class should be refactored to abstract that properly and reduce the scope of
-    // of the mutex, but in the meantime, the access to the members of this class are
-    // protected by a mutex.
     std::mutex mMutex;
 
-    void Setup(bool isAsyncReport, uint16_t timeout)
+    void Setup(bool isAsyncReport)
     {
         auto lock      = ScopedLock(mMutex);
-        mEnabled       = true;
         mIsAsyncReport = isAsyncReport;
-        mTimeout       = timeout;
-
-        if (mIsAsyncReport && mTimeout)
-        {
-            chip::DeviceLayer::PlatformMgr().ScheduleWork(StartAsyncTimeout, reinterpret_cast<intptr_t>(this));
-        }
     }
 
     void Reset()
     {
         auto lock = ScopedLock(mMutex);
 
-        if (mIsAsyncReport && mTimeout)
-        {
-            chip::DeviceLayer::PlatformMgr().ScheduleWork(StopAsyncTimeout, reinterpret_cast<intptr_t>(this));
-        }
-
-        mEnabled       = false;
-        mIsAsyncReport = false;
-        mTimeout       = 0;
+        mIsAsyncReport = true;
         mStatus        = EXIT_SUCCESS;
         mResults.clear();
         mLogs.clear();
@@ -136,7 +99,6 @@ struct InteractiveServerResult
     void MaybeAddLog(const char * module, uint8_t category, const char * base64Message)
     {
         auto lock = ScopedLock(mMutex);
-        VerifyOrReturn(mEnabled);
 
         const char * messageType = nullptr;
         switch (category)
@@ -165,7 +127,6 @@ struct InteractiveServerResult
     void MaybeAddResult(const char * result)
     {
         auto lock = ScopedLock(mMutex);
-        VerifyOrReturn(mEnabled);
 
         mResults.push_back(result);
     }
@@ -224,24 +185,6 @@ struct InteractiveServerResult
 
         content << "}";
         return content.str();
-    }
-
-    static void StartAsyncTimeout(intptr_t arg)
-    {
-        auto self    = reinterpret_cast<InteractiveServerResult *>(arg);
-        auto timeout = chip::System::Clock::Seconds16(self->mTimeout);
-        chip::DeviceLayer::SystemLayer().StartTimer(timeout, OnAsyncTimeout, self);
-    }
-
-    static void StopAsyncTimeout(intptr_t arg)
-    {
-        auto self = reinterpret_cast<InteractiveServerResult *>(arg);
-        chip::DeviceLayer::SystemLayer().CancelTimer(OnAsyncTimeout, self);
-    }
-
-    static void OnAsyncTimeout(chip::System::Layer *, void * appState)
-    {
-        RemoteDataModelLogger::LogErrorAsJSON(CHIP_ERROR_TIMEOUT);
     }
 };
 
@@ -323,21 +266,9 @@ CHIP_ERROR InteractiveServerCommand::RunCommand()
 
 bool InteractiveServerCommand::OnWebSocketMessageReceived(char * msg)
 {
-    bool isAsyncReport = strlen(msg) == 0;
-    uint16_t timeout   = 0;
-    if (!isAsyncReport && strlen(msg) <= 5 /* Only look for numeric values <= 65535 */)
-    {
-        std::stringstream ss;
-        ss << msg;
-        ss >> timeout;
-        if (!ss.fail())
-        {
-            isAsyncReport = true;
-        }
-    }
+    bool isAsyncReport = false;
 
-    gInteractiveServerResult.Setup(isAsyncReport, timeout);
-    VerifyOrReturnValue(!isAsyncReport, true);
+    gInteractiveServerResult.Setup(isAsyncReport);
 
     auto shouldStop = ParseCommand(msg, &gInteractiveServerResult.mStatus);
     mWebSocketServer.Send(gInteractiveServerResult.AsJsonString().c_str());
